@@ -1,23 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<defs>
-  <path id="node-shape-circle" d="m -5 0 a 5,5 0 1 0 10,0 5,5 0 1 0 -10,0 z"/>
-  <symbol id="node-shape-triangle">
-    <path d="m 0 -0.5 l 0.5 1 h -1 z"/>
-  </symbol>
-  <symbol id="node-shape-box">
-    <path d="m -0.5 -0.5 h 1 v 1 h -1 z"/>
-  </symbol>
-  <symbol id="node-shape-diamond">
-    <path d="m -0.5 0 l 0.5 -0.5 l 0.5 0.5 l -0.5 0.5 z"/>
-  </symbol>
-  <symbol id="node-shape-rounded-box">
-    <path d="m -0.3 -0.5 h 0.6 a 0.2,0.2 0 0 1 0.2,0.2 v 0.6 a 0.2,0.2 0 0 1 -0.2,0.2 h -0.6 a 0.2,0.2 0 0 1 -0.2,-0.2 v -0.6 a 0.2,0.2 0 0 1 0.2,-0.2 é"/>
-  </symbol>
-  <style type="text/css"><![CDATA[
-  path {
-  fill: red;
-  stroke: black;
-  stroke-width: 1;
-  }
-  ]]></style>
-</defs>
+<svg>
+  <defs>
+    <path id="node-shape-circle" d="m -5 0 a 5,5 0 1 0 10,0 5,5 0 1 0 -10,0 z"></path>
+    <!--
+	<symbol id="node-shape-triangle">
+	<path d="m 0 -0.5 l 0.5 1 h -1 z"/>
+	</symbol>
+	<symbol id="node-shape-box">
+	<path d="m -0.5 -0.5 h 1 v 1 h -1 z"/>
+	</symbol>
+	<symbol id="node-shape-diamond">
+	<path d="m -0.5 0 l 0.5 -0.5 l 0.5 0.5 l -0.5 0.5 z"/>
+	</symbol>
+	<symbol id="node-shape-rounded-box">
+	<path d="m -0.3 -0.5 h 0.6 a 0.2,0.2 0 0 1 0.2,0.2 v 0.6 a 0.2,0.2 0 0 1 -0.2,0.2 h -0.6 a 0.2,0.2 0 0 1 -0.2,-0.2 v -0.6 a 0.2,0.2 0 0 1 0.2,-0.2 é"/>
+	</symbol>
+    -->
+    <style type="text/css"><![CDATA[
+    path {
+    fill: red;
+    stroke: black;
+    stroke-width: 1;
+    }
+    ]]></style>
+  </defs>
+</svg>

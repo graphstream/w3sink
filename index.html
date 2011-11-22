@@ -1,22 +1,39 @@
-<!DOCTYPE html>
-<html>
+<html xmlns="http://www.w3.org/1999/xhtml" 
+      xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:svg="http://www.w3.org/2000/svg">
   <head>
     <script src="jquery.js" type="text/javascript" charset="utf-8"></script>
+    <script src="w3sink.js" type="text/javascript"
+	    charset="utf-8"></script>
     <script src="renderer/svg.js" type="text/javascript"
-    charset="utf-8"></script>
+	    charset="utf-8"></script>
     <script type="text/javascript">
-      $(function() {
-      r = new $.renderer($('#canvas'));
-      r.init();
-      r.an('A');
-      r.an('B');
-      });
+    $(function() {
+      r = new w3sink.renderer('canvas', 600, 300);
+      var nodes = 'abcdefghijklmnopqrstuvwxyz';
+      for(var i = 0; i < nodes.length; i++)
+	r.an(nodes[i]);
+      for(var i = 0; i < 30; i++) {
+        var i = Math.round(Math.random()*nodes.length);
+        var j = 0;
+        do {
+          j = Math.round(Math.random()*nodes.length);
+        } while(i==j);
+
+        r.ae(nodes[i]+nodes[j],nodes[i],nodes[j]);
+      }			 
+    });
     </script>
+    <style type="text/css">
+      svg {
+      border: 1px solid #999;
+      background-color: white;
+      }
+    </style>
   </head>
-  <body>
-    <svg xmlns="http://www.w3.org/2000/svg"
-	 xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="canvas"
-	 width="600px" height="600px" viewBox="0 0 600 600">
-    </svg> 
+  <body style="background-color: #222222; color: white;">
+    <h2>GraphStream w3sink with SVG rendering</h2>
+    <div style="text-align: center;">
+      <div id="canvas" style="display: inline-block;"></div>
+    </div>
   </body>
 </html>

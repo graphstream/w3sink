@@ -1,0 +1,23 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20000802//EN" "http://www.w3.org/TR/2000/CR-SVG-20000802/DTD/svg-20000802.dtd">
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1">
+  <defs>
+    <path id="node-shape-circle" d="m -5 0 a 5,5 0 1 0 10,0 5,5 0 1 0 -10,0 z"/>
+    <path id="node-shape-triangle" d="m 0 -0.5 l 0.5 1 h -1 z"/>
+    <path id="node-shape-box" d="m -5 -5 h 10 v 10 h -10 z"/>
+    <path id="node-shape-diamond" d="m -0.5 0 l 0.5 -0.5 l 0.5 0.5 l -0.5 0.5 z"/>
+    <path id="node-shape-rounded-box" d="m -0.3 -0.5 h 0.6 a 0.2,0.2 0 0 1 0.2,0.2 v 0.6 a 0.2,0.2 0 0 1 -0.2,0.2 h -0.6 a 0.2,0.2 0 0 1 -0.2,-0.2 v -0.6 a 0.2,0.2 0 0 1 0.2,-0.2 z"/>
+    -->
+    <style type="text/css"><![CDATA[
+    .node {
+    fill: #222222;
+    stroke: black;
+    stroke-width: 1;
+    }
+    .edge {
+    stroke: black;
+    stroke-width: 1;
+    }
+    ]]></style>
+  </defs>
+</svg>
