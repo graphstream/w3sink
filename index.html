@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src="jquery.js" type="text/javascript" charset="utf-8"></script>
+    <script src="renderer/svg.js" type="text/javascript"
+    charset="utf-8"></script>
+    <script type="text/javascript">
+      $(function() {
+      r = new $.renderer($('#canvas'));
+      r.init();
+      r.an('A');
+      r.an('B');
+      });
+    </script>
+  </head>
+  <body>
+    <svg xmlns="http://www.w3.org/2000/svg"
+	 xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" id="canvas"
+	 width="600px" height="600px" viewBox="0 0 600 600">
+    </svg> 
+  </body>
+</html>
