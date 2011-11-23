@@ -12,6 +12,22 @@ function SvgRenderer(rootElementId, width, height) {
     this.svg.setAttributeNS(null, "width", width);
     this.svg.setAttributeNS(null, "height", height);
     this.svg.style.display = "block";
+    this.svg.renderer = this;
+
+    this.svg.onmouseup = function(e) {
+	this.dragged_element = null;
+    };
+
+    this.svg.onmousemove = function(e) { 
+	if (this.dragged_element != null) {
+	    var offset = $(this).position();
+	    var offsetX = e.clientX - offset.left;
+	    var offsetY = e.clientY - offset.top;
+	    var x = (offsetX / this.width.animVal.value) * this.viewBox.animVal.width + this.viewBox.animVal.x;
+	    var y = (offsetY / this.height.animVal.value) * this.viewBox.animVal.height + this.viewBox.animVal.y;
+	    this.renderer.setNodePosition(this.dragged_element, x, y);
+	}
+    };
     
     this.root.appendChild(this.svg);
     
@@ -19,7 +35,16 @@ function SvgRenderer(rootElementId, width, height) {
     $(defs).load('renderer/svg-defs.svg defs > *');
     
     this.svg.appendChild(defs);
+
+    this.nodes_container = document.createElementNS(this.xmlns.svg, 'g');
+    this.edges_container = document.createElementNS(this.xmlns.svg, 'g');
+    this.svg.appendChild(this.edges_container);
+    this.svg.appendChild(this.nodes_container);
     
+    this.setViewBox = function(orgX, orgY, width, height) {
+	this.svg.setAttributeNS(null, "viewBox", orgX+" "+orgY+" "+width+" "+height);
+    };
+
     this.an = function(id) {
 	var g = document.createElementNS(this.xmlns.svg, "g");
 	var u = document.createElementNS(this.xmlns.svg, "use");
@@ -30,14 +55,21 @@ function SvgRenderer(rootElementId, width, height) {
 	u.setAttributeNS(this.xmlns.xlink, "href", "#node-shape-circle");
 	g.setAttributeNS(null, "transform", "translate(50 50)");
 	g.setAttributeNS(null, "class", "node");
+	g.setAttribute('draggable', 'true');
 	
+	g.onmousedown = function(e) {
+	    getAncestorByTagName(this, 'svg').dragged_element = this;
+	};
+
+	g.edges = [];
+
 	g.appendChild(m);
 	g.appendChild(u);
-	this.svg.appendChild(g);
+	this.nodes_container.appendChild(g);
 
 	var x = Math.round(Math.random()*parseInt(this.svg.getAttribute('width')));
 	var y = Math.round(Math.random()*parseInt(this.svg.getAttribute('height')))
-	this.set_node_position(id,x,y);
+	this.setNodePosition(id,x,y);
     };
     
     this.dn = function(id) {
@@ -48,31 +80,27 @@ function SvgRenderer(rootElementId, width, height) {
     this.ae = function(id,source,target,directed) {
 	var g = document.createElementNS(this.xmlns.svg, "g");
 	var u = document.createElementNS(this.xmlns.svg, "polyline");
-	var m = document.createElementNS(this.xmlns.svg, "metadata");
 	
-	var s = document.createElement('node');
-	var t = document.createElement('node');
-	s.innerHTML = source;
-	t.innerHTML = target;
-	m.appendChild(s);
-	m.appendChild(t);
+	g.edgePoints = [
+	    document.getElementById(w3sink.nid(source)),
+	    document.getElementById(w3sink.nid(target))
+	];
 	
-	var nm = $('#'+w3sink.nid(source)+' metadata').get(0);
-	var ne = document.createElement('edge');
-	ne.innerHTML = id;
-	nm.appendChild(ne);
+	if (g.edgePoints[0] == null)
+	    console.log('source node '+source+'does not exist');
 
-	nm = $('#'+w3sink.nid(target)+' metadata').get(0);
-	ne = document.createElement('edge');
-	ne.innerHTML = id;
-	nm.appendChild(ne);
+	if (g.edgePoints[1] == null)
+	    console.log('target node '+target+'does not exist');
+
+	$(g.edgePoints[0]).bind('nodeMoved', {edge: g}, g.edgeNodeMoved);
+	$(g.edgePoints[1]).bind('nodeMoved', {edge: g}, g.edgeNodeMoved);
 
 	g.setAttribute("id", w3sink.eid(id));
 	g.setAttributeNS(null, "class", "edge");
-	g.appendChild(m);
 	g.appendChild(u);
-	this.svg.appendChild(g);
-	this.update_edge_points(g);
+	this.edges_container.appendChild(g);
+	
+	g.edgeUpdatePoints();
     };
     
     this.de = function(id) {
@@ -80,47 +108,85 @@ function SvgRenderer(rootElementId, width, height) {
 	e.parentNode.removeChild(n);
     };
 
-    this.set_node_size = function(id,sx,sy) {
+    this.setNodeSize = function(id,sx,sy) {
 	if(sy == undefined)
 	    sy = sx;
 	
-	w3sink.set_node_attribute(null,w3sink.nid(id)+'__use', 'transform', 'scale('+sx+' '+sy+')');
+	w3sink.setNodeAttribute(null,w3sink.nid(id)+'__use', 'transform', 'scale('+sx+' '+sy+')');
     };
 
-    this.set_node_shape = function(id, shape) {
-	w3sink.set_node_attribute(this.xmlns.xlink, w3sink.nid(id)+'__use', "href", "#node-shape-"+shape);
+    this.setNodeShape = function(id, shape) {
+	w3sink.setNodeAttribute(this.xmlns.xlink, w3sink.nid(id)+'__use', "href", "#node-shape-"+shape);
     };
     
-    this.set_node_position = function(id, x, y) {
-	w3sink.set_node_attribute(null,w3sink.nid(id), 'transform', 'translate('+x+' '+y+')');
-	var edges = document.getElementById(w3sink.nid(id)).getElementsByTagName('metadata')[0].getElementsByTagName('edge');
+    this.setNodePosition = function(id, x, y) {
+	var n;
 
-	for(var i = 0; i < edges.length; i++)
-	    this.update_edge_points(document.getElementById(w3sink.eid(edges[i].innerHTML)));
+	if (typeof(id) == 'string')
+	    n = document.getElementById(w3sink.nid(id));
+	else
+	    n = id;
+	
+	n.x = x;
+	n.y = y;
+	
+	n.setAttributeNS(null, 'transform', 'translate('+x+' '+y+')');
+
+	$(n).trigger('nodeMoved', n, x, y);
+	// for(var i = 0; i < n.edges.length; i++)
+	//    this.updateEdgePoints(n.edges[i]);
     };
 
-    this.set_node_style = function(id,k,v) {
+    this.setNodeStyle = function(id,k,v) {
 	$('#'+w3sink.nid(id)+"__use").css(k,v);
     };
 
-    this.update_edge_points = function(e) {
-	var nodes = e.getElementsByTagName('metadata')[0].getElementsByTagName('node');
+    this.updateEdgePoints = function(e) {
+	var nodes = e.points;
 	var points = "";
 	
 	for(var i=0; i<nodes.length; i++) {
-	    var node = document.getElementById(w3sink.nid(nodes[i].innerHTML));
-	    var coords = node.getAttribute('transform');
+	    var node = document.getElementById(w3sink.nid(nodes[i]));
 
-	    if(coords != null) {
-		if(i > 0)
-		    points += " ";
-		
-		points += coords.substring(10, coords.length - 1);
-	    }
+	    if(i > 0)
+		points += " ";
+	    
+	    points += nodes[i].x + " " + nodes[i].y;
 	}
 
 	e.getElementsByTagName('polyline')[0].setAttributeNS(null, 'points', points);
     };
 };
 
-w3sink.renderer = SvgRenderer;
+SVGGElement.prototype.edgeUpdatePoints = function() {
+    if (!this.edgePoints)
+	return;
+
+    var points = "";
+    
+    for (var i = 0; i < this.edgePoints.length; i++) {
+	if(i > 0)
+	    points += " ";
+	
+	points += this.edgePoints[i].x + " " + this.edgePoints[i].y;
+    }
+    
+    this.getElementsByTagName('polyline')[0].setAttributeNS(null, 'points', points);
+};
+
+SVGGElement.prototype.edgeNodeMoved = function(event, node, x, y) {
+    event.data.edge.edgeUpdatePoints();
+};
+
+function getAncestorByTagName(el, tn){
+    tn = tn.toLowerCase();
+    if(el.parentNode) {
+	if ( el.parentNode.nodeType == 1
+	     && el.parentNode.tagName.toLowerCase() == tn
+	   ) return el.parentNode;
+	return getAncestorByTagName( el.parentNode, tn );
+    }
+    return null
+}
+
+w3sink.Renderer = SvgRenderer;
