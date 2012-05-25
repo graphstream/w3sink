@@ -1,0 +1,19 @@
+<project>
+	<target name="concatenate" description="Concatenate all js files">
+		<concat destfile="build/gs-w3sink.js">
+			<filelist dir="src/js/" files="gs-w3sink-core.js,gs-w3sink-svg.js,gs-w3sink-canvas.js,gs-w3sink-layout.js,gs-w3sink-dgs.js" />
+		</concat>
+	</target>
+
+	<target name="compress" depends="concatenate" description="Compress gs-w3sink.js to gs-w3sink.min.js">
+		<apply executable="java" parallel="false">
+			<filelist dir="build/" files="gs-w3sink.js" />
+			<arg line="-jar" />
+			<arg path="lib/yuicompressor.jar" />
+			<srcfile />
+			<arg line="-o" />
+			<mapper type="glob" from="*.js" to="./*.min.js" />
+			<targetfile />
+		</apply>
+	</target>
+</project>

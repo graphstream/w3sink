@@ -1,0 +1,45 @@
+@font-face {
+    font-family: 'Exo';
+    src: url('Exo-Regular-webfont.eot');
+    src: url('Exo-Regular-webfont.eot?#iefix') format('embedded-opentype'),
+         url('Exo-Regular-webfont.woff') format('woff'),
+         url('Exo-Regular-webfont.ttf') format('truetype'),
+         url('Exo-Regular-webfont.svg#ExoRegular') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'Exo';
+    src: url('Exo-Regular-Italic-webfont.eot');
+    src: url('Exo-Regular-Italic-webfont.eot?#iefix') format('embedded-opentype'),
+         url('Exo-Regular-Italic-webfont.woff') format('woff'),
+         url('Exo-Regular-Italic-webfont.ttf') format('truetype'),
+         url('Exo-Regular-Italic-webfont.svg#ExoRegularItalic') format('svg');
+    font-weight: normal;
+    font-style: italic;
+}
+
+@font-face {
+    font-family: 'Exo';
+    src: url('Exo-Bold-webfont.eot');
+    src: url('Exo-Bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('Exo-Bold-webfont.woff') format('woff'),
+         url('Exo-Bold-webfont.ttf') format('truetype'),
+         url('Exo-Bold-webfont.svg#ExoBold') format('svg');
+    font-weight: bold;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'ExoBlack';
+    src: url('Exo-Black-webfont.eot');
+    src: url('Exo-Black-webfont.eot?#iefix') format('embedded-opentype'),
+         url('Exo-Black-webfont.woff') format('woff'),
+         url('Exo-Black-webfont.ttf') format('truetype'),
+         url('Exo-Black-webfont.svg#ExoBlack') format('svg');
+    font-weight: normal;
+    font-style: normal;
+
+}
