@@ -99,10 +99,8 @@
 			    this.parseAttributes('edge', id);
 			    break;
 			case 'cg':
-			    this.parseAttributes('graph');
 			    break;
 			case 'st':
-				this.graph.st(this.nextReal());
 			    break;
 			case 'cl':
 			    this.graph.cl();
@@ -114,7 +112,7 @@
 	}
 
 	DGSParser.prototype.nextId = function() {
-		var re = /^(?:'([^']*)'|"([^"]*)"|([\w\d]+))(?: (.*))?$/;
+		var re = /^(?:'([^'])*'|"([^"])"|([\w\d]+))(?: (.*))?$/;
 	    var ex = re.exec(this.line);
 		var i = 0;
 
@@ -122,19 +120,11 @@
 			this.line = ex [4];
 			return ex[i];
 		}
-		
-		return undefined;
-	}
-	
-	DGSParser.prototype.nextReal = function() {
-		var re = /^(\d+(?:\.\d+)?$/;
-		var ex = re.exec(this.line);
-		
-		return ex[1];
+		else return undefined;
 	}
 
 	DGSParser.prototype.parseAttributes = function(type, e, attributes) {
-	    var re = /[+-]?("[^"]*"|'[^']*'|\w[[\w.]*)(?:[:=](\d+(?:[.]\d+)?|\w[[\w.]*|"[^"]*"|'[^']*'|#[a-fA-F0-9]{6}))?/g;
+	    var re = /[+-]?("[^"]*"|'[^']*'|\w[[\w.]*)([:=](\d+([.]\d+)?|\w[[\w.]*|"[^"]*"|'[^']*'|#[a-fA-F0-9]{6}))?/g;
 	    switch(type) {
 	    case 'node':
 			break;

@@ -1,0 +1,10 @@
+#!/bin/bash
+
+M2="$HOME/.m2/repository"
+GSM2="$M2/org/graphstream"
+CLASSPATH="$HOME/workspace/ws-graphstream/gs-core/bin/:$GSM2/gs-boids/git/gs-boids-git.jar:$GSM2/gs-algo/1.2-git/gs-algo-1.2-git.jar:$GSM2/pherd/1.0/pherd-1.0.jar:$GSM2/mbox2/1.0/mbox2-1.0.jar"
+#:$M2/org/scala-lang/scala-library/2.9.0/scala-library-2.9.0.jar:$GSM2/gs-ui/1.2-git/gs-ui-1.2-git.jar"
+CLASS="W3SinkDemoBoids"
+
+javac -cp $CLASSPATH $CLASS.java
+java -cp $CLASSPATH:. $CLASS

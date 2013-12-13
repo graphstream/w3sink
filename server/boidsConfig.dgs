@@ -1,0 +1,40 @@
+DGS004
+null 0 0
+
+#
+# GraphStream attributes
+#
+
+cg ui.quality ui.antialias
+cg ui.stylesheet="node { size: 4px; } node.moustik { fill-color: #1d1d1d; } edge { fill-color: grey; }"
+
+#
+# gs-boids attributes
+# 
+
+cg boids.max_steps=8000
+cg boids.random_seed=2132134879
+cg boids.area=1
+cg boids.sleep_time=30
+
+#
+# Moustik species
+#
+
+cg boids.species.moustik=org.graphstream.boids.BoidSpecies # Create a new species using class BoidSpecies
+cg boids.species.moustik.angle_of_view=0                   # Set angleOfView of this species to 0
+cg boids.species.moustik.view_zone=0.15                    # Set viewZone
+cg boids.species.moustik.speed_factor=0.3                  # Set speedFactor
+cg boids.species.moustik.max_speed=1                       # Set maxSpeed
+cg boids.species.moustik.min_speed=0.04                    # Set minSpeed
+cg boids.species.moustik.direction_factor=0.1              # Set directionFactor
+cg boids.species.moustik.attraction_factor=0.5             # Set attractionFactor
+cg boids.species.moustik.repulsion_factor=0.001            # Set repulsionFactor
+cg boids.species.moustik.inertia=1.1                       # Set inertia
+cg boids.species.moustik.add_species_name_in_ui_class=true # Tell species to add its name in the 'ui.class' attribute
+#                                                             of node, so we can define a custom css for each species. 
+
+#
+# This last command create 100 boids of the moustik species
+#
+cg boids.species.moustik.count=100

@@ -1,0 +1,49 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" class="no-js" lang="fr">
+	<head>
+		<meta charset="UTF-8" />
+		<title>GraphStream - w3sink</title>
+		<link rel="shortcut icon" href="/media/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="css/style.css"/>
+		<script type="text/javascript" src="js/extern-min.js"></script>
+		<script type="text/javascript" src="js/netstream/data_view.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_constants.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_commons.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_transport.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_sender.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_receiver.js"></script>
+		<script type="text/javascript" src="js/gs-w3sink-min.js"></script>
+	</head>
+	<body>
+		<div id="viewer" style="height: 60%;">
+			<h1>GraphStream / w3sink</h1>
+			<div id="canvas" style="height: 100%; min-height:400px;"></div>
+		</div>
+		<script type="text/javascript">
+		var graph, transport, l, receiver;
+
+		jQuery(document).ready(function($) {
+			graph = new GS.Graph('#canvas', 'canvas');
+			graph.viewbox.padding.top = 75;
+			graph.viewbox.padding.bottom = 75;
+			graph.viewbox.padding.left = 75;
+			graph.viewbox.padding.right = 75;
+			
+			transport = new netstream.Transport({
+				'host': "192.168.1.5",
+				'port': 2003,
+				'uri': '/',
+				'base64': true,
+				'debug': false
+			});
+			
+			receiver = new netstream.Receiver({
+				'debug': false,
+				'transport': transport,
+				'sink': graph
+			});
+		});
+		</script>
+	</body>
+</html>
+

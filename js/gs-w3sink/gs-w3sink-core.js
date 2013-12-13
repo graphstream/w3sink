@@ -796,8 +796,8 @@
 		this.viewbox = new ViewBox(this);
 		this.dispatch = new Sink();
 		
-		this._width = jQuery(this.context.getContainer()).width();
-		this._height = jQuery(this.context.getContainer()).height();
+		this._width = jQuery(this.context.getCanvas()).width();
+		this._height = jQuery(this.context.getCanvas()).height();
 	}
 	
 	Graph.prototype = {
@@ -999,7 +999,7 @@
 		},
 
 		nodeAttributeRemoved: function (sourceId, timeId, nodeId, key) {
-			this.cn(nodeId, key, null);
+			this.cn(nodeId, key, value);
 		},
 
 		edgeAdded: function (sourceId, timeId, edgeId, from, to, directed) {
@@ -1019,7 +1019,7 @@
 		},
 
 		edgeAttributeRemoved: function (sourceId, timeId, edgeId, key) {
-			this.ce(edgeId, key, null);
+			this.ce(edgeId, key, value);
 		},
 
 		graphAttributeAdded: function (sourceId, timeId, key, value) {
@@ -1031,7 +1031,7 @@
 		},
 
 		graphAttributeRemoved: function (sourceId, timeId, key) {
-			this.cg(key, null);
+			this.cg(key, value);
 		},
 
 		graphCleared: function (sourceId, timeId) {
@@ -1167,37 +1167,6 @@
 		contexts[name] = constructor;
 	}	
 	
-	var utilsLoadDefaultArgs = {
-		method: 'GET',
-		responseType: ''
-	};
-	
-	function utilsLoad(args) {
-		extend(utilsLoadDefaultArgs, args);
-		
-		var xhr = new XMLHttpRequest();
-		xhr.open(args.method, args.url, true);
-		xhr.responseType = args.responseType;
-		
-		xhr.send();
-		
-		return xhr;
-	}
-	
-	function FileSource(type) {
-		Source.call(this, type);
-		this.type = type;
-	}
-	
-	FileSource.prototype = {
-		begin: function(url) {},
-		nextEvents: function() {},
-		nextStep: function() {},
-		end: function() {}
-	};
-	
-	extend(Source.prototype, FileSource.prototype);
-	
 	var GS = {
 		extend: extend,
 		Node: Node,
@@ -1206,7 +1175,6 @@
 		Context: Context,
 		Source: Source,
 		Sink: Sink,
-		FileSource: FileSource,
 		registerContext: registerContext
 	};
 	
