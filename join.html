@@ -1,0 +1,119 @@
+<!doctype html>
+<html xmlns="http://www.w3.org/1999/xhtml" class="no-js" lang="fr">
+	<head>
+		<title>GraphStream - w3sink</title>
+		<link rel="shortcut icon" href="/media/favicon.ico" />
+		<link rel="stylesheet" type="text/css" href="css/style.css"/>
+		<link rel="stylesheet" type="text/css" href="css/w3sink-demo.css"/>
+		<script type="text/javascript" src="js/extern-min.js"></script>
+		<!--<script type="text/javascript" src="js/netstream-min.js"></script>-->
+		<script type="text/javascript" src="js/netstream/data_view.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_constants.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_commons.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_transport.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_sender.js"></script>
+		<script type="text/javascript" src="js/netstream/netstream_receiver.js"></script>
+		<script type="text/javascript" src="js/gs-w3sink-min.js"></script>
+		<script type="text/javascript" src="js/w3sink-demo.js"></script>
+	</head>
+	<body>
+		<div id="viewer" style="position:relative;">
+			<h1>GraphStream / w3sink</h1>
+			
+			<div id="canvas">
+				<h2>Join the graph ! <button class="cloud" id="updateNode" style="display:none">update your node</button></h2>
+				
+				<div id="parameters">
+					<ul class="tabs">
+						<li><a class="active">Connect</a></li>
+						<li><a data-tabs=".parameters" data-tab="#tab-informations" class="disable">Your Informations</a></li>
+						<li><a data-tabs=".parameters" data-tab="#tab-style" class="disable">Your Style</a></li>
+					</ul>
+					
+					<div id="tab-connect" class="tab active" style="text-align: center;">
+						<div id="logger">
+							<label for="connectName" style="text-align:left;">Your name</label>
+							<input type="text" name="connectName" style="display:inline;"/>
+							<br/>
+							<button id="connectButton">Be a node !</button>
+						</div>
+					</div>
+					
+					<div id="tab-informations" class="tab parameters">
+						<div class="information">
+							<h3>Your Name</h3>
+							<input type="text" name="name" readonly="readonly"/>
+							
+							<p style="text-align:justify;">
+							You will be connected to people who are sharing tags with you.
+							You have to choose some tags on your right. Your node can be customized in the 'style' tab.
+							</p>
+						</div>
+						
+						<div class="information">
+							<h3>Your tags</h3>
+							<select class="tags" multiple="multiple">
+								<optgroup label="Your favorite OS">
+									<option value="linux">Linux</option>
+									<option value="mac-os">Mac OS</option>
+									<option value="unix">Other UNIX-based</option>
+									<option value="windows">Windows</option>
+								</optgroup>
+								<optgroup label="Your favorite graph library">
+									<option value="graphstream">GraphStream</option>
+									<option value="gephi">Gephi</option>
+									<option value="tulip">Tulip</option>
+								</optgroup>
+								<optgroup label="Your favorite drinks">
+									<option value="water">Water</option>
+									<option value="milk">Milk</option>
+									<option value="coffee1">Coffee</option>
+									<option value="coffee2">I need more coffee</option>
+									<option value="coffee3">Please ... Give me coffee</option>
+									<option value="tea">Tea</option>
+									<option value="beer1">Beer</option>
+									<option value="beer2">I really like beer</option>
+									<option value="rum">Rum</option>
+									<option value="vodka">Vodka</option>
+									<option value="whisky">Whisky</option>
+								</optgroup>
+							</select>
+							<p style="font-size:11px;">Just select a few tags (between 2 and 5)</p>
+						</div>
+						
+						<span style="clear:both"></span>
+					</div>
+					
+					<div id="tab-style" class="tab parameters">
+						<h3>Your node</h3>
+		
+						<div id="thenode" style="float:left; width: 35%; max-width: 35%;">
+							<svg width="100px" height="100px" style="background: url('media/lines.png') #fafafa; border: 1px solid #999999;" xmlns:xlink="http://www.w3.org/1999/xlink">
+								<g><circle r="30" cx="50" cy="50" style="stroke-width: 5px;"/></g>
+							</svg>
+						</div>
+						
+						<div id="style-selector" style="float:left; width: 55%; max-width: 55%;">
+							<a id="fillcolor" class="setstyle colorpicker active" data-style-type="fill" data-style-value="#89a9e3">fill color</a>
+							<a id="strokecolor" class="setstyle colorpicker" data-style-type="stroke" data-style-value="#222">stroke 	color</a>
+							<div id="colorpicker" style="float:right;"></div>
+						</div>
+						<br style="clear:both;"/>
+					</div>
+				</div>
+				<div id="graph">
+				
+				</div>
+				<br style="clear:both;"/>
+			</div>
+		</div>
+		<div id="disconnect" style="position:fixed;right:8px;bottom:4px;"><a href="?disconnect">disconnect</a></div>
+		<div id="notification" class="rounded"></div>
+		<script type="text/javascript">
+		$(document).ready(function($) {
+			W3SinkDemo.init();
+		});
+		</script>
+	</body>
+</html>
+
