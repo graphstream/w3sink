@@ -1,0 +1,258 @@
+<html>
+    <head>
+        <title>three.js - basic tetrahedron</title>
+        <meta charset="utf-8">
+        <style>
+            body {
+                background-color: #444444;
+                margin: 0px;
+                overflow: hidden;
+            }
+        </style>
+    </head>
+    <body>
+        <script src="js/three.min.js"></script>
+        <script>
+            var camera, scene, renderer, container;
+            var RATIO = 1;
+            var width = window.innerWidth * RATIO, height = window.innerHeight * RATIO;
+            var window_half_x = width / 2, window_half_y = height / 2;
+            var mouse_x = 0, mouse_y = 0;
+
+            // Material for the edges.
+            var material = new THREE.LineBasicMaterial({
+                linewidth: 4,
+                vertexColors: true
+            });
+
+            init();
+            animate();
+
+            function init() {
+                // Create a div for the scene.
+                container = document.createElement('div');
+                document.body.appendChild(container);
+
+                // Camera.
+                camera = new THREE.PerspectiveCamera(60, width / height, 1, 10000);
+                camera.position.z = 100;
+
+                // Scene and WebGL renderer.
+                scene = new THREE.Scene();
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(width, height);
+                container.appendChild(renderer.domElement);
+
+                // Fill scene.
+                create_data();
+            }
+
+            function create_data() {
+                // Node location (regular tetrahedron with an edge length of 100).
+                var nodes_position = new Array(new THREE.Vector3(0, 0, 61), new THREE.Vector3(-29, -50, -20),
+                                               new THREE.Vector3(-29, 50, -20), new THREE.Vector3(58, 0, -20));
+
+                // Hexadecimal and RGB colours for the nodes.
+                var node_colours = new Array(0xff0000, 0x00ff00, 0x0000ff, 0xffffff);
+                var rgb_colours = new Array({r:255,g:100,b:100,a:1},{r:100,g:255,b:100,a:1},{r:100,g:100,b:255,a:1},{r:255,g:255,b:255,a:1});
+
+                /* Edges. */
+
+                var base_geom = new THREE.Geometry();
+
+                // Create edges as a path (from node 0 to 1, 2, 0, 3, 1).
+                for (var i = 0; i < 3; i++) {
+                    base_geom.vertices.push(nodes_position[i]);
+                }
+                base_geom.vertices.push(nodes_position[0]);
+                base_geom.vertices.push(nodes_position[3]);
+                base_geom.vertices.push(nodes_position[1]);
+
+                // Colour each of those 5 edges (6 lines because colour is from an edge's end to the other end).
+                base_geom.colors.push(new THREE.Color(0x99ffbb));
+                base_geom.colors.push(new THREE.Color(0x99ffbb));
+                base_geom.colors.push(new THREE.Color(0x99ffbb));
+                base_geom.colors.push(new THREE.Color(0x99ffbb));
+                base_geom.colors.push(new THREE.Color(0x99ffbb));
+                base_geom.colors.push(new THREE.Color(0x99ffbb));
+
+                // This coloured path is added to the scene.
+                var base = new THREE.Line(base_geom, material);
+                scene.add(base);
+
+                // Create the missing edge (between nodes 2 and 3).
+                var last_geom = new THREE.Geometry();
+                last_geom.vertices.push(nodes_position[2]);
+                last_geom.vertices.push(nodes_position[3]);
+
+                // Colour it and add it to the scene.
+                last_geom.colors.push(new THREE.Color(0x99ffbb));
+                last_geom.colors.push(new THREE.Color(0x99ffbb));
+                var last = new THREE.Line(last_geom, material);
+                scene.add(last);
+
+                /* Nodes. */
+
+                var node_geom = new THREE.Geometry(), node;
+
+                // Each node is created as a 1x1x1 cube (scaled x10), then added to the scene.
+                for (var i = 0; i < 4; i++) {
+                    node = new THREE.Mesh(new THREE.CubeGeometry(1, 1, 1), new THREE.MeshLambertMaterial({ color: node_colours[i]}));
+                    node.position = nodes_position[i];
+                    //node.position.normalize();
+                    //node.position.multiplyScalar(10);
+                    node.scale.x = node.scale.y = node.scale.z = 10;
+                    scene.add(node);
+                }
+
+                // Display (O; x; y; z).
+                //coord_system();
+
+                // Node labels (code shamelessly stolen from Labeled-Geometry.html of stemkoski.github.com).
+                for (var i = 0; i < 4; i++) {
+                    var spritey = new THREE.Sprite();
+                    spritey = makeTextSprite(" s" + i + " ", { fontsize: 16, backgroundColor: rgb_colours[i], position: nodes_position[i] });
+                    scene.add(spritey);
+                }
+
+                // Lights.
+                var ambient_light = new THREE.AmbientLight(0x666666);
+                scene.add(ambient_light);
+                var spot_light = new THREE.DirectionalLight(0xFFBB99);
+                spot_light.position.set(15, 5, 5);
+                scene.add(spot_light);
+
+                // Mouse events listener.
+                document.addEventListener('mousemove', onDocumentMouseMove, false);
+            }
+
+            function onDocumentMouseMove(event) {
+                mouse_x = event.clientX - window_half_x;
+                mouse_y = event.clientY - window_half_y;
+            }
+
+            function animate() {
+                // requestAnimationFrame optimizes loop timing and stop animating when browser tab is not visible.
+                requestAnimationFrame(animate);
+                render();
+            }
+
+            function render() {
+                // Move the camera according to mouse movement.
+                camera.position.x += (mouse_x - camera.position.x) * .05;
+                camera.position.y += (200 - mouse_y - camera.position.y) * .05;
+
+                // Keep looking at the scene.
+                camera.lookAt(scene.position);
+
+                renderer.render(scene, camera);
+            }
+
+            // Cartesian coordinate system.
+            function coord_system() {
+                var origin = new THREE.Mesh(new THREE.SphereGeometry(3), new THREE.MeshLambertMaterial({ color: 0xffffff }));
+                scene.add(origin);
+
+                var line_x = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshLambertMaterial({ color: 0xff0000 }));
+                var line_y = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshLambertMaterial({ color: 0x00ff00 }));
+                var line_z = new THREE.Mesh(new THREE.SphereGeometry(1), new THREE.MeshLambertMaterial({ color: 0x0000ff }));
+
+                line_x.position = new THREE.Vector3(300,0,0);
+                line_y.position = new THREE.Vector3(0,300,0);
+                line_z.position = new THREE.Vector3(0,0,300);
+
+                var x_geom = new THREE.Geometry();
+                var y_geom = new THREE.Geometry();
+                var z_geom = new THREE.Geometry();
+
+                x_geom.vertices.push(origin.position);
+                x_geom.vertices.push(line_x.position);
+                x_geom.colors.push(new THREE.Color(0xff0000));
+                x_geom.colors.push(new THREE.Color(0xff0000));
+
+                y_geom.vertices.push(origin.position);
+                y_geom.vertices.push(line_y.position);
+                y_geom.colors.push(new THREE.Color(0x00ff00));
+                y_geom.colors.push(new THREE.Color(0x00ff00));
+
+                z_geom.vertices.push(origin.position);
+                z_geom.vertices.push(line_z.position);
+                z_geom.colors.push(new THREE.Color(0x0000ff));
+                z_geom.colors.push(new THREE.Color(0x0000ff));
+
+                var base_x = new THREE.Line(x_geom, material);
+                var base_y = new THREE.Line(y_geom, material);
+                var base_z = new THREE.Line(z_geom, material);
+                scene.add(base_x);
+                scene.add(base_y);
+                scene.add(base_z);
+            }
+
+
+            // Create and display labels (code shamelessly stolen from Labeled-Geometry.html of stemkoski.github.com).
+            function makeTextSprite(message, parameters) {
+                if (parameters === undefined) parameters = {};
+                
+                var fontface = parameters.hasOwnProperty("fontface") ? parameters["fontface"] : "Arial";
+                var fontsize = parameters.hasOwnProperty("fontsize") ? parameters["fontsize"] : 18;
+                var borderThickness = parameters.hasOwnProperty("borderThickness") ? parameters["borderThickness"] : 4;
+                var borderColor = parameters.hasOwnProperty("borderColor") ? parameters["borderColor"] : { r:0, g:0, b:0, a:1.0 };
+                var backgroundColor = parameters.hasOwnProperty("backgroundColor") ? parameters["backgroundColor"] : { r:255, g:255, b:255, a:1.0 };
+                var position = parameters.hasOwnProperty("position") ? parameters["position"] : new THREE.Vector3(0, 0, 0);
+
+                var canvas = document.createElement('canvas');
+                canvas.width = 100;
+                canvas.height = 50;
+                var context = canvas.getContext('2d');
+                context.font = "Bold " + fontsize + "px " + fontface;
+    
+                // get size data (height depends only on font size)
+                var metrics = context.measureText(message);
+                var textWidth = metrics.width;
+    
+                // background color
+                context.fillStyle   = "rgba(" + backgroundColor.r + "," + backgroundColor.g + ","
+                                              + backgroundColor.b + "," + backgroundColor.a + ")";
+                // border color
+                context.strokeStyle = "rgba(" + borderColor.r + "," + borderColor.g + ","
+                                  + borderColor.b + "," + borderColor.a + ")";
+
+                context.lineWidth = borderThickness;
+                roundRect(context, borderThickness / 2, borderThickness / 2, textWidth + borderThickness, fontsize * 1.4 + borderThickness, 6);
+                // 1.4 is extra height factor for text below baseline: g,j,p,q.
+    
+                // text color
+                context.fillStyle = "rgba(0, 0, 0, 1.0)";
+                context.fillText(message, borderThickness, fontsize + borderThickness);
+
+                // canvas contents will be used for a texture
+                var texture = new THREE.Texture(canvas) 
+                texture.needsUpdate = true;
+                texture.opacity = 0;
+
+                var spriteMaterial = new THREE.SpriteMaterial( { map: texture });
+                var sprite = new THREE.Sprite(spriteMaterial);
+                sprite.scale.set(40, 20, 0);
+                sprite.position.set(position.x, position.y, position.z);
+                return sprite;  
+            }
+
+            // Function for drawing rounded rectangles (code shamelessly stolen from Labeled-Geometry.html of stemkoski.github.com).
+            function roundRect(ctx, x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x+r, y);
+                ctx.lineTo(x+w-r, y);
+                ctx.quadraticCurveTo(x+w, y, x+w, y+r);
+                ctx.lineTo(x+w, y+h-r);
+                ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                ctx.lineTo(x+r, y+h);
+                ctx.quadraticCurveTo(x, y+h, x, y+h-r);
+                ctx.lineTo(x, y+r);
+                ctx.quadraticCurveTo(x, y, x+r, y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();   
+            }
+        </script>
+    </body>
+</html>
