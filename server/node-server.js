@@ -1,4 +1,5 @@
-var SERVER_IP = "192.168.1.5";
+var SERVER_IP = "192.168.1.12";
+var express = require('express');
 
 var http = require('http')
     , fs = require('fs')
@@ -22,23 +23,9 @@ netstream.sender = require("../js/netstream/netstream_sender").netstream.sender;
 //
 // Classical Http server to serve the files...
 //
-http.createServer(function(request, response) {
-  
-    fs.readFile('./' + request.url,
-    function(error, content) {
-      if (error) {
-        response.writeHead(500);
-        response.end();
-        //console.log(error);
-      }
-      else {
-        response.writeHead(200, {
-          'Content-Type': 'text/html'
-        });
-        response.end(content, 'utf-8');
-      }
-    });
-}).listen(8080, function(){console.log('Http Server running at http://127.0.0.1:8080/')});
+var test_app = express();
+test_app.use( express.static(__dirname + '/../'));
+test_app.listen(8080, function(){console.log('Http Server running at http://127.0.0.1:8080/')});
 
 
 
