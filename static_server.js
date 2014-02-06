@@ -8,9 +8,13 @@
  *
  */
 
-var express = require('express');
-var app = express();
+var express = require('express'),
+	app = express(),
+	PORT = 1337;
 
+app.use(express.logger({ immediate: true, format: 'dev' }));
 app.use( express.static(__dirname + '/'));
 
-app.listen(1337);
+app.listen(PORT, function(){
+	console.log("Server listening on http://localhost:" + PORT);
+});
