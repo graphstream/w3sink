@@ -150,6 +150,6 @@
 		}
 	};
 	
-	extend(GS.Context.prototype, WebGLContext.prototype);
+	GS.extend(GS.Context.prototype, WebGLContext.prototype);
 	
 } (this));

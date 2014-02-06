@@ -1,7 +1,10 @@
 (function(exports) {
 	"use strict";
 	
-	exports.GS.prototype.dgs = function (url) {
+	if (GS === undefined)
+		throw new Error("GS is not loaded");
+	
+	exports.GS.Graph.prototype.dgs = function (url) {
 		var dgs = new DGSParser(this);
 		
 		d3.text(url, function(data) {
@@ -112,7 +115,7 @@
 	}
 
 	DGSParser.prototype.nextId = function() {
-		var re = /^(?:'([^'])*'|"([^"])"|([\w\d]+))(?: (.*))?$/;
+		var re = /^\s*(?:'([^']+)'|"([^"]+)"|([\w\d]+))(?: (.*))?$/;
 	    var ex = re.exec(this.line);
 		var i = 0;
 

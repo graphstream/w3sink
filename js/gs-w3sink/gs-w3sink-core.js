@@ -796,8 +796,10 @@
 		this.viewbox = new ViewBox(this);
 		this.dispatch = new Sink();
 		
-		this._width = jQuery(this.context.getCanvas()).width();
-		this._height = jQuery(this.context.getCanvas()).height();
+		//this._width = jQuery(this.context.getCanvas()).width();
+		//this._height = jQuery(this.context.getCanvas()).height();
+		this._width = jQuery(this.context.getContainer()).width();
+		this._height = jQuery(this.context.getContainer()).height();
 	}
 	
 	Graph.prototype = {
