@@ -4,12 +4,15 @@
 	if (GS === undefined)
 		throw new Error("GS is not loaded");
 	
-	exports.GS.Graph.prototype.dgs = function (url) {
+	exports.GS.Graph.prototype.dgs = function (url, callback) {
 		var dgs = new DGSParser(this);
 		
 		d3.text(url, function(data) {
 			dgs.setData(data);
 			dgs.parse();
+			if(callback !== undefined){
+				callback();
+			}
 		});
 	}
 	

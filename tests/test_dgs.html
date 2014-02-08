@@ -21,9 +21,11 @@
 		<script type="text/javascript" src="/js/gs-w3sink/gs-w3sink-dgs.js"></script>
 		<script type="text/javascript" src="/js/gs-w3sink/gs-w3sink-svg.js"></script>
 		<script>
-		
+		function do_graph_stuff(){
+			console.log('ID de "10" : ' + graph.nodes['10'].id);
+		}
 		var graph = new GS.Graph('#canvas', 'svg');
-		graph.dgs('graph.dgs')
+		graph.dgs('graph.dgs', do_graph_stuff);
 		
 		</script>
 	</body>
