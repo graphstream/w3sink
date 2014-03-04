@@ -1,0 +1,23 @@
+{
+  "name": "w3sink",
+  "version": "0.0.0",
+  "homepage": "https://github.com/graphstream/w3sink",
+  "authors": [
+    "Yoann Pigné <yoann.pigne@gmail.com>"
+  ],
+  "description": "a web interface for GraphStream",
+  "main": "dist/gs-w3sink.js",
+  "keywords": [
+    "graphstream",
+    "graph visualisation"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "demos",
+    "lib"
+  ]
+}

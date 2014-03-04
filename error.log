@@ -1,2 +1,0 @@
-[Fri May 25 17:53:17 2012] [crit] [client 127.0.0.1] (13)Permission denied: /home/raziel/.htaccess pcfg_openfile: unable to check htaccess file, ensure it is readable
-[Fri May 25 17:53:17 2012] [crit] [client 127.0.0.1] (13)Permission denied: /home/raziel/.htaccess pcfg_openfile: unable to check htaccess file, ensure it is readable
