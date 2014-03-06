@@ -12,8 +12,10 @@ var express = require('express'),
 	app = express(),
 	PORT = 1337;
 
-app.use(express.logger({ immediate: true, format: 'dev' }));
+app.use(express.logger({ immediate: false, format: 'dev' }));
 app.use( express.static(__dirname + '/'));
+app.use( express.static(__dirname + '/../'));
+app.use( express.static(__dirname + '/../../'));
 
 app.listen(PORT, function(){
 	console.log("Server listening on http://localhost:" + PORT);
