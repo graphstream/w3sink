@@ -21,7 +21,8 @@
     "demos",
     "lib",
     "Gruntfile.js",
-    "package.json"
+    "package.json",
+    ".*"
   ],
   "devDependencies": {
     "qunit": "~1.14.0",
