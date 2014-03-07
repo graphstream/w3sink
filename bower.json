@@ -4,7 +4,7 @@
   "homepage": "https://github.com/graphstream/w3sink",
   "authors": [
     "Guilhelm Savin <gsavin@nomadogeeks.org>",
-    "Serge Delye <serge.delye@univ-lehavre.fr>",
+    "Serge Délye <serge.delye@univ-lehavre.fr>",
     "Yoann Pigné <yoann.pigne@gmail.com>"
   ],
   "description": "a web interface for GraphStream",
