@@ -24,11 +24,11 @@
 		<script>
 		function do_graph_stuff(){
 			console.log("Dgs graph arrived.");
-			console.log('ID de "10" : ' + graph.nodes['10'].id);
+			console.log('ID de "1" : ' + graph.nodes['1'].id);
 		}
-		var graph = new GS.Graph('#canvas', 'svg');
+		graph = new GS.Graph('#canvas', 'svg');
 		
-		graph.dgs('graph.dgs', do_graph_stuff);
+		graph.dgs('../../test/graph.dgs', do_graph_stuff);
 		console.log("Asked for the dgs graph.")
 
 		

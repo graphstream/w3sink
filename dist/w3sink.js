@@ -1,5 +1,5 @@
-/*! w3sink v0.0.0 - 2014-03-07 
- *  License: ISC */
+/*! w3sink v0.0.1 - 2014-03-07 
+ *  License: MIT */
 (function(exports) {
     'use strict';
 
@@ -792,8 +792,8 @@
 
         this.context = new contexts[context](selector);
 
-        this.nodes = {};
-        this.edges = {};
+        this.nodes = {length:0};
+        this.edges = {length:0};
 
         this.indexedNodes = [];
         this.indexedEdges = [];
@@ -820,6 +820,14 @@
             return this._height;
         },
 
+        nodesCount: function() {
+            return this.nodes.length;
+        },
+
+        edgesCount: function() {
+            return this.edges.length;
+        },
+
         an: function(id) {
             if (this.nodes.hasOwnProperty(id)) {
                 exports.console.log('[warning] node exists "' + id + '"');
@@ -828,9 +836,9 @@
 
             var n = this.context.createNode(this, id);
             this.nodes[id] = n;
+            this.nodes.length++
             n.setStyle(this.default_node_style);
 
-            this.nodesCount++;
             this.sendNodeAdded(id);
         },
 
@@ -871,7 +879,7 @@
 
             for (var eid in this.edges) {
                 if (this.edges[eid].source.id === id || this.edges[eid].target.id === id)
-                    edgeToRemove.push(this.edges[i]);
+                    edgeToRemove.push(this.edges[eid]);
             }
 
             for (var i = 0; i < edgeToRemove.length; i++)
@@ -896,6 +904,7 @@
             }
 
             delete this.nodes[id];
+            this.nodes.length--;
         },
 
         ae: function(id, src, trg, directed) {
@@ -911,6 +920,8 @@
 
             var e = this.context.createEdge(this, id, this.nodes[src], this.nodes[trg], directed);
             this.edges[id] = e;
+            this.edges.length++;
+
             e.setStyle(this.default_edge_style);
 
             this.nodes[src].edges[id] = e;
@@ -939,13 +950,17 @@
 
         de: function(id) {
             var e = this.edges[id];
+            if(typeof e === 'undefined')
+                return;
 
             this.sendEdgeRemoved(id);
 
             this.context.removeEdge(this, e);
 
             delete e.source.edges[id];
-            delete e.target.edges[id];
+            if(e.source !== e.target){
+                delete e.target.edges[id];
+            }
 
             if (e.index === this.indexedEdges.length - 1)
                 this.indexedEdges.pop();
@@ -962,6 +977,8 @@
             }
 
             delete this.edges[id];
+            this.edges.length--;
+
         },
 
         cg: function(k, v) {
@@ -1910,7 +1927,8 @@
         var dir,
             id,
             source,
-            target;
+            target,
+            directed;
 
         while (this.ready()) {
             this.next();
@@ -1938,6 +1956,7 @@
                 case 'ae':
                     id = this.nextId();
                     source = this.nextId();
+                    directed = this.isDirectedEdge();
                     target = this.nextId();
 
                     this.graph.ae(id, source, target);
@@ -1949,9 +1968,8 @@
                     break;
                 case 'de':
                     id = this.nextId();
-
                     this.graph.de(id);
-                    this.parseAttributes('edge', id);
+                    //this.parseAttributes('edge', id);
                     break;
                 case 'cg':
                     break;
@@ -1968,14 +1986,26 @@
     };
 
     DGSParser.prototype.nextId = function() {
-        var re = /^\s*(?:'([^']+)'|"([^"]+)"|([\w\d]+))(?: (.*))?$/;
+        var re = /^\s*(?:'([^']+)'|"([^"]+)"|([\w\d-_]+))(?:(.*))?$/;
         var ex = re.exec(this.line);
         var i = 0;
-
         if (ex[++i] !== undefined || ex[++i] !== undefined || ex[++i] !== undefined) {
             this.line = ex[4];
             return ex[i];
         } else return undefined;
+    };
+
+    DGSParser.prototype.isDirectedEdge = function() {
+        var re = /^\s*(>)(?:(.*))?$/;
+        var ex = re.exec(this.line);
+        if (ex === null) {
+            return false;
+        }
+
+        if (ex[1] !== undefined && ex[1] === '>') {
+            this.line = ex[2];
+            return true;
+        } else return false;
     };
 
     DGSParser.prototype.nextReal = function() {

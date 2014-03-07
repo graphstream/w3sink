@@ -16,9 +16,11 @@ Published versions of w3sink are located in the `dist` folder :
 - [w3sink.min.js](https://github.com/graphstream/w3sink/blob/master/dist/w3sink.min.js): the full minified library.  
 - [w3sink.min.map](https://github.com/graphstream/w3sink/blob/master/dist/w3sink.min.map): useful when using the minified version and debugging with Developer Tools. 
 
-W3Sink uses [bower](http://bower.io/) to publish new releases. You will need [node.js](http://nodejs.org/) installed in order to use bower. The easiest and recommended way to get the library is to use bower. 
+W3Sink uses [bower](http://bower.io/) to publish new releases so you don't need to clone the repository if you want to use w3sink.  
 
-Make use you have bower installed:
+Bower is the easiest and recommended way to get the library. However you will need [node.js](http://nodejs.org/) installed in order to use bower. 
+
+Then make use you have bower installed:
 
 ```bash
 npm install -g bower
