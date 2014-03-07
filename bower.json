@@ -19,5 +19,10 @@
     "test",
     "demos",
     "lib"
-  ]
+  ],
+  "devDependencies": {
+    "qunit": "~1.14.0",
+    "jquery": "~2.1.0",
+    "d3": "~3.4.3"
+  }
 }

@@ -1,5 +1,5 @@
 module.exports = function(grunt) {
-	'use strict';
+    'use strict';
     var bannerContent = '/*! <%= pkg.name %> v<%= pkg.version %> - ' +
         '<%= grunt.template.today("yyyy-mm-dd") %> \n' +
         ' *  License: <%= pkg.license %> */\n';
@@ -24,8 +24,20 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON('package.json'),
 
         qunit: {
-            target: {
-                src: ['test/**/*.html']
+            all: {    
+                options: {
+                    urls: [
+                        'http://localhost:8888/test/test-dgs.html',
+                    ]
+                }
+            }
+        },
+        connect: {
+            server: {
+                options: {
+                    port: 8888,
+                    base: '.'
+                }
             }
         },
 
@@ -68,8 +80,10 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-qunit');
+    grunt.loadNpmTasks('grunt-contrib-connect');
 
-    grunt.registerTask('default', ['jshint', 'qunit']);
+    grunt.registerTask('default', ['jshint']);
+    grunt.registerTask('test', ['connect', 'qunit']);
     grunt.registerTask('build', ['jshint', 'qunit', 'concat', 'uglify']);
 
 };
