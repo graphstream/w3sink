@@ -1,7 +1,7 @@
 {
   "name": "w3sink",
-  "version": "0.0.0",
-  "description": "A web interface forn GraphStream",
+  "version": "0.0.1",
+  "description": "A web interface for GraphStream",
   "main": "index.js",
   "scripts": {
     "test": "grunt test"
@@ -10,8 +10,11 @@
     "type": "git",
     "url": "git://github.com/graphstream/w3sink.git"
   },
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "graphstream",
+    "graph visualisation"
+  ],
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/graphstream/w3sink/issues"
   },
