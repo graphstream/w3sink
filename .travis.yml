@@ -1,0 +1,18 @@
+before_script:
+   
+
+before_install:
+	- npm install -g grunt-cli
+  	- npm install -g bower
+  	- echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config
+
+install: 
+	- npm install
+	- bower install -f
+
+before_script: 
+	- grunt build
+
+language: node_js
+node_js:
+    - "0.10"

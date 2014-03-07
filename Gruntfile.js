@@ -9,13 +9,13 @@ module.exports = function(grunt) {
     var sourceMapUrl = name + '.min.js.map';
 
     var sources = [
-        'gs-w3sink-core.js',
-        'gs-w3sink-json.js',
-        'gs-w3sink-svg.js',
-        'gs-w3sink-canvas.js',
-        'gs-w3sink-dgs.js',
-        'gs-w3sink-layout.js',
-        'gs-w3sink-webgl.js'
+        'lib/gs-w3sink-core.js',
+        'lib/gs-w3sink-json.js',
+        'lib/gs-w3sink-svg.js',
+        'lib/gs-w3sink-canvas.js',
+        'lib/gs-w3sink-dgs.js',
+        'lib/gs-w3sink-layout.js',
+        'lib/gs-w3sink-webgl.js'
     ];
 
     grunt.initConfig({
@@ -24,7 +24,7 @@ module.exports = function(grunt) {
         pkg: grunt.file.readJSON('package.json'),
 
         qunit: {
-            all: {    
+            all: {
                 options: {
                     urls: [
                         'http://localhost:8888/test/test-dgs.html',
@@ -83,7 +83,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-connect');
 
     grunt.registerTask('default', ['jshint']);
-    grunt.registerTask('test', ['connect', 'qunit']);
-    grunt.registerTask('build', ['jshint', 'qunit', 'concat', 'uglify']);
+    grunt.registerTask('test', ['jshint', 'connect', 'qunit']);
+    grunt.registerTask('build', ['concat', 'uglify']);
 
 };
