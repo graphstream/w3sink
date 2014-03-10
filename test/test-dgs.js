@@ -28,6 +28,7 @@
                 exports.ok(graph.nodes['1'].hasAttribute('attribute2') === false, 'Problem with attributes deletion');
             });
             exports.test("Test elaborate-typed attributes", function() {
+                exports.ok(graph.edges['2-0'].attributes.color === '#Fea453', 'Problem with color-types attributes');
                 var arr = graph.edges['0-1'].attributes.array;
                 exports.ok(typeof(arr) !== 'undefined', 'Missing simple array-typed attribute');
                 exports.ok(Array.prototype.isPrototypeOf(arr), 'Wrong type for an array-typed attribute');
