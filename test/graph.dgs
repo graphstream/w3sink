@@ -1,12 +1,13 @@
 DGS004
 null 0 0
-an "0"
+an "0" attribute
 an "1"
 an "2" attribute :-2
-an "n1" "attribute":'1' attribute2 = -12.34E+07
-ae "0-1" "0"  "1"
-ae "1-2" "1" > "2"
+an n1 "attribute":'1' attribute2 = -12.34E+07
+ae "0-1" "0"  "1" array={1,2,3}
+ae "1-2" "1" > "2" array2 : {{0,1},{2,3,4, '4.5'},-5}
 ae 2-0 "2"  >"0"
+ce "2-0" 'map' = [ key1: val1, 'key2': {"val","2"}]
 st 0.000000
 cn 1 'attribute'="1" attribute2 :-2
 an 3 attribute = 1
