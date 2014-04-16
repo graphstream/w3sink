@@ -23,21 +23,25 @@
 		<script type="text/javascript" src="lib/gs-w3sink-svg.js"></script>
 		<script>
 		function data_is_ready(source){
-			console.log("Dgs data has arrived. Let's read it.");
-			while(source.nextStep()){
-				console.log('one more step, graph size: ' + graph.nodesCount);
+			var t = source.nextStep();
+			if(t){
+				console.log('One more step.');
+				setTimeout(function(){data_is_ready(source)},1000);
+			} else{
+				console.log('All done.')
 			}
-			console.log('ID de "1" : ' + graph.nodes['1'].id);
-
 		}
 		var graph = new GS.Graph('#canvas', 'svg');
 		var source = new GS.FileSourceDGS();
 		source.addSink(graph);
 		var promise = source.begin('../../test/graph.dgs');
-		promise.then(data_is_ready, function(err){
+		promise.then(function(source){
+			console.log("Dgs data has arrived. Let's read it.");
+			data_is_ready(source);
+		}, function(err){
 			throw err
 		});
-		console.log("Asked for the dgs graph.")
+		console.log("Asked for the dgs graph.");
 
 
 
