@@ -1,0 +1,29 @@
+DGS004
+null 0 0
+an n1
+cn n1 xyz:0,0,61.237243569579452454
+st 1
+an n2
+cn n2 xyz:-28.867513459481288225,-50,-20.412414523193150818
+st 2
+ae 12 n1 n2
+st 3
+an n3
+cn n3 xyz:-28.867513459481288225,50,-20.412414523193150818
+st 4
+ae 13 n1 > n3
+ae 23 n2 n3
+cn n3 style:'fill-color:#00FF00;'
+st 5
+cn n1 xyz:20,20,42
+st 6
+an n4
+cn n4 xyz:57.735026918962576451,0,-20.412414523193150818
+cn n4 size:5
+ce 13 style:'stroke-width:6px;stroke-color:#0000ff;'
+de 23
+st 7
+ae 14 n1 > n4
+ae 24 n2 n4
+st 7
+dn n2

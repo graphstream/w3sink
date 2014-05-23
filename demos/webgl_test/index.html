@@ -1,0 +1,53 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml" class="no-js" lang="fr">
+    <head>
+        <title>Generic 3D viewer test</title>
+        <link rel="shortcut icon" href="media/favicon.ico" />
+    </head>
+    <body style="margin:0; overflow: hidden;">
+        <h1>GraphStream / w3sink</h1>
+        <div id="viewer" style="height: 60%;">
+            <div id="three" style="width:100%; height:100%; position:absolute;"></div>
+        </div>
+
+        <script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="bower_components/es6-promise/promise.min.js"></script>
+        <script type="text/javascript" src="bower_components/three.js/three.min.js"></script>
+        <script type="text/javascript" src="bower_components/threejs-controls/controls/TrackballControls.js"></script>
+
+        <script type="text/javascript" src="lib/gs-w3sink-core.js"></script>
+        <script type="text/javascript" src="lib/gs-w3sink-dgs.js"></script>
+        <script type="text/javascript" src="lib/gs-w3sink-webgl.js"></script>
+
+        <script>
+
+        function data_is_ready(source) {
+            var t = source.nextStep();
+            if(t) {
+                console.log('One more step.');
+                setTimeout(function(){ data_is_ready(source) },1000);
+            } else {
+                console.log('All done.')
+            }
+        }
+
+        var graph = new GS.Graph('#three', 'webgl');
+        var source = new GS.FileSourceDGS();
+        source.addSink(graph);
+
+        var file_name = 'tetra.dgs';
+        var promise = source.begin(file_name);
+
+        console.log('DGS file: ' + file_name);
+
+        promise.then(function(source){
+            console.log("Dgs data has arrived. Let's read it.");
+            data_is_ready(source);
+        }, function(err) {
+            throw err
+        });
+        console.log("Asked for the dgs graph.");
+
+        </script>
+    </body>
+</html>
