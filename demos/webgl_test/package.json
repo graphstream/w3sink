@@ -1,5 +1,5 @@
 {
-  "name": "dgs_test",
+  "name": "webgl_test",
   "version": "0.0.0",
   "description": "",
   "main": "node static_server.js",
