@@ -1,1249 +1,1305 @@
-/*! w3sink v0.0.1 - 2014-03-07 
+/*! w3sink v0.0.1 - 2014-05-26 
  *  License: MIT */
 (function(exports) {
-    'use strict';
+  'use strict';
+
+  /**
+   * Extends a class.
+   *
+   * @param source
+   *       the super class prototype
+   * @param target
+   *       the new class prototype
+   */
+
+  function extend(source, target) {
+    for (var element in source) {
+      if (!target.hasOwnProperty(element))
+        target[element] = source[element];
+    }
+  }
+
+  /**
+   * Convert a string size in pixel size.
+   */
+
+  function getSize(element, value) {
+    var re = /(\d+)(\w+)?/;
+    var s = re.exec(value);
+
+    return s[1];
+  }
+
+  /**
+   * Build a new source object. It allows to connect sinks and send
+   * events. A source has an id which is used as sourceId for sent
+   * events.
+   *
+   * @param id
+   *        id of the source
+   */
+
+  function Source(id) {
+    this.id = id;
+    this.timeId = 0;
+    this.sinks = [];
+  }
+
+  /*
+   * Prototype of Source.
+   */
+  Source.prototype = {
+    /**
+     * Register a new Sink on this source.
+     */
+    addSink: function(sink) {
+      this.sinks.push(sink);
+    },
 
     /**
-     * Extends a class.
+     * Remove a previously registered sink.
+     */
+    removeSink: function(sink) {
+
+    },
+
+    /**
+     * Get a new time id.
+     */
+    newTimeId: function() {
+      return this.timeId++;
+    },
+
+    /**
+     * Send a nodeAdded event.
      *
+     * @param nodeId
+     *        id of the added node
+     */
+    sendNodeAdded: function(nodeId) {
+      var t = this.newTimeId();
+
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].nodeAdded(this.id, t, nodeId);
+    },
+
+    /**
+     * Send a nodeRemoved event.
+     *
+     * @param nodeId
+     *          id of the node being removed
+     */
+    sendNodeRemoved: function(nodeId) {
+      var t = this.newTimeId();
+
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].nodeRemoved(this.id, t, nodeId);
+    },
+
+    /**
+     * Send a nodeAttributeAdded event.
+     *
+     * @param nodeId
+     *          id of the node
+     * @param attrid
+     *          key of the attribute
+     * @param value
+     *          value of the attribute
+     */
+    sendNodeAttributeAdded: function(nodeId, attrId, value) {
+      var t = this.newTimeId();
+
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].nodeAttributeAdded(this.id, t, nodeId, attrId, value);
+    },
+
+    /**
+     * Send a nodeAttributeChanged event.
+     *
+     * @param nodeId
+     *          id of the node
+     * @param attrid
+     *          key of the attribute
+     * @param [optional] oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
+     */
+    sendNodeAttributeChanged: function(nodeId, attrId, oldValue, newValue) {
+      var t = this.newTimeId();
+
+      if (newValue === undefined)
+        newValue = oldValue;
+
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].nodeAttributeChanged(this.id, t, nodeId, attrId,
+          oldValue, newValue);
+    },
+
+    /**
+     * Send a nodeAttributeRemoved event.
+     *
+     * @param nodeId
+     *          id of the node
+     * @param attrid
+     *          key of the attribute
+     */
+    sendNodeAttributeRemoved: function(nodeId, attrId) {
+      var t = this.newTimeId();
+
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].nodeAttributeRemoved(this.id, t, nodeId, attrId);
+    },
+
+    /**
+     * Send an edgeAdded event.
+     *
+     * @param edgeId
+     *          id of the new edge
      * @param source
-     *       the super class prototype
+     *          id of the source node of the edge
      * @param target
-     *       the new class prototype
+     *          id of the target node of the edge
+     * @param [optional] directed
+     *          true if edge is directed
      */
+    sendEdgeAdded: function(edgeId, source, target, directed) {
+      var t = this.newTimeId();
 
-    function extend(source, target) {
-        for (var element in source) {
-            if (!target.hasOwnProperty(element))
-                target[element] = source[element];
-        }
-    }
+      if (directed === undefined)
+        directed = false;
+
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].edgeAdded(this.id, t, edgeId, source, target, directed);
+    },
 
     /**
-     * Convert a string size in pixel size.
-     */
-
-    function getSize(element, value) {
-        var re = /(\d+)(\w+)?/;
-        var s = re.exec(value);
-
-        return s[1];
-    }
-
-    /**
-     * Build a new source object. It allows to connect sinks and send
-     * events. A source has an id which is used as sourceId for sent
-     * events.
+     * Send an edgeRemoved event.
      *
-     * @param id
-     *        id of the source
+     * @param edgeId
+     *          id of the edge being removed
      */
+    sendEdgeRemoved: function(edgeId) {
+      var t = this.newTimeId();
 
-    function Source(id) {
-        this.id = id;
-        this.timeId = 0;
-        this.sinks = [];
-    }
-
-    /*
-     * Prototype of Source.
-     */
-    Source.prototype = {
-        /**
-         * Register a new Sink on this source.
-         */
-        addSink: function(sink) {
-            this.sinks.push(sink);
-        },
-
-        /**
-         * Remove a previously registered sink.
-         */
-        removeSink: function(sink) {
-
-        },
-
-        /**
-         * Get a new time id.
-         */
-        newTimeId: function() {
-            return this.timeId++;
-        },
-
-        /**
-         * Send a nodeAdded event.
-         *
-         * @param nodeId
-         *        id of the added node
-         */
-        sendNodeAdded: function(nodeId) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].nodeAdded(this.id, t, nodeId);
-        },
-
-        /**
-         * Send a nodeRemoved event.
-         *
-         * @param nodeId
-         *          id of the node being removed
-         */
-        sendNodeRemoved: function(nodeId) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].nodeRemoved(this.id, t, nodeId);
-        },
-
-        /**
-         * Send a nodeAttributeAdded event.
-         *
-         * @param nodeId
-         *          id of the node
-         * @param attrid
-         *          key of the attribute
-         * @param value
-         *          value of the attribute
-         */
-        sendNodeAttributeAdded: function(nodeId, attrId, value) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].nodeAttributeAdded(this.id, t, nodeId, attrId, value);
-        },
-
-        /**
-         * Send a nodeAttributeChanged event.
-         *
-         * @param nodeId
-         *          id of the node
-         * @param attrid
-         *          key of the attribute
-         * @param [optional] oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        sendNodeAttributeChanged: function(nodeId, attrId, oldValue, newValue) {
-            var t = this.newTimeId();
-
-            if (newValue === undefined)
-                newValue = oldValue;
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].nodeAttributeChanged(this.id, t, nodeId, attrId, oldValue, newValue);
-        },
-
-        /**
-         * Send a nodeAttributeRemoved event.
-         *
-         * @param nodeId
-         *          id of the node
-         * @param attrid
-         *          key of the attribute
-         */
-        sendNodeAttributeRemoved: function(nodeId, attrId) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].nodeAttributeRemoved(this.id, t, nodeId, attrId);
-        },
-
-        /**
-         * Send an edgeAdded event.
-         *
-         * @param edgeId
-         *          id of the new edge
-         * @param source
-         *          id of the source node of the edge
-         * @param target
-         *          id of the target node of the edge
-         * @param [optional] directed
-         *          true if edge is directed
-         */
-        sendEdgeAdded: function(edgeId, source, target, directed) {
-            var t = this.newTimeId();
-
-            if (directed === undefined)
-                directed = false;
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].edgeAdded(this.id, t, edgeId, source, target, directed);
-        },
-
-        /**
-         * Send an edgeRemoved event.
-         *
-         * @param edgeId
-         *          id of the edge being removed
-         */
-        sendEdgeRemoved: function(edgeId) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].edgeRemoved(this.id, t, edgeId);
-        },
-
-        /**
-         * Send a edgeAttributeAdded event.
-         *
-         * @param edgeId
-         *          id of the edge
-         * @param attrid
-         *          key of the attribute
-         * @param value
-         *          value of the attribute
-         */
-        sendEdgeAttributeAdded: function(edgeId, attrId, value) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].edgeAttributeAdded(this.id, t, edgeId, attrId, value);
-        },
-
-        /**
-         * Send a edgeAttributeChanged event.
-         *
-         * @param edgeId
-         *          id of the edge
-         * @param attrid
-         *          key of the attribute
-         * @param [optional] oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        sendEdgeAttributeChanged: function(edgeId, attrId, oldValue, newValue) {
-            var t = this.newTimeId();
-
-            if (newValue === undefined)
-                newValue = oldValue;
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].edgeAttributeChanged(this.id, t, edgeId, attrId, oldValue, newValue);
-        },
-
-        /**
-         * Send a edgeAttributeRemoved event.
-         *
-         * @param edgeId
-         *          id of the edge
-         * @param attrid
-         *          key of the attribute
-         */
-        sendEdgeAttributeRemoved: function(edgeId, attrId) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].edgeAttributeRemoved(this.id, t, edgeId, attrId);
-        },
-
-        /**
-         * Send a graphAttributeAdded event.
-         *
-         * @param attrid
-         *          key of the attribute
-         * @param value
-         *          value of the attribute
-         */
-        sendGraphAttributeAdded: function(attrId, value) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].graphAttributeAdded(this.id, t, attrId);
-        },
-
-        /**
-         * Send a graphAttributeChanged event.
-         *
-         * @param attrid
-         *          key of the attribute
-         * @param [optional] oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        sendGraphAttributeChanged: function(attrId, oldValue, newValue) {
-            var t = this.newTimeId();
-
-            if (newValue === undefined)
-                newValue = oldValue;
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].graphAttributeChanged(this.id, t, attrId, oldValue, newValue);
-        },
-
-        /**
-         * Send a graphAttributeRemoved event.
-         *
-         * @param attrid
-         *          key of the attribute
-         */
-        sendGraphAttributeRemoved: function(attrId) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].graphAttributeRemoved(this.id, t, attrId);
-        },
-
-        /**
-         * Send a graphClearedEvent.
-         */
-        sendGraphCleared: function() {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].graphCleared(this.id, t);
-        },
-
-        /**
-         * Send a stepBegins event.
-         *
-         * @param step
-         *          step
-         */
-        sendStepBegins: function(step) {
-            var t = this.newTimeId();
-
-            for (var i = 0; i < this.sinks.length; i++)
-                this.sinks[i].stepBegins(this.id, t, step);
-        }
-    };
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].edgeRemoved(this.id, t, edgeId);
+    },
 
     /**
-     * Build a new Sink object.
-     */
-
-    function Sink() {}
-
-    /*
-     * The Sink prototype
-     */
-    Sink.prototype = {
-        /**
-         * A new node has been added.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param nodeId
-         *          id of the new node
-         */
-        nodeAdded: function(sourceId, timeId, nodeId) {},
-
-        /**
-         * A node will be removed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param nodeId
-         *          id of the node being removed
-         */
-        nodeRemoved: function(sourceId, timeId, nodeId) {},
-
-        /**
-         * A new attribute has been added on a node.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param nodeId
-         *          id of the node
-         * @param attrId
-         *          key of the attribute
-         * @param value
-         *          value of the attribute
-         */
-        nodeAttributeAdded: function(sourceId, timeId, nodeId, attrId, value) {},
-
-        /**
-         * An attribute of a node has been changed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param nodeId
-         *          id of the node
-         * @param attrId
-         *          key of the attribute
-         * @param oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        nodeAttributeChanged: function(sourceId, timeId, nodeId, attrId, oldValue, newValue) {},
-
-        /**
-         * An attribute of a node has been removed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param nodeId
-         *          id of the node
-         * @param attrId
-         *          key of the attribute
-         */
-        nodeAttributeRemoved: function(sourceId, timeId, nodeId, attrId) {},
-
-        /**
-         * A new edge has been added.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param edgeId
-         *          id of the new edge
-         * @param source
-         *          id of the source node of the edge
-         * @param target
-         *          id of the target node of the edge
-         * @param directed
-         *          true if edge is directed
-         */
-        edgeAdded: function(sourceId, timeId, edgeId, source, target, directed) {},
-
-        /**
-         * A new edge will be removed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param edgeId
-         *          id of the edge being removed
-         */
-        edgeRemoved: function(sourceId, timeId, edgeId) {},
-
-        /**
-         * An attribute of an edge has been added.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param edgeId
-         *          id of the edge
-         * @param attrId
-         *          key of the attribute
-         * @param value
-         *          value of the attribute
-         */
-        edgeAttributeAdded: function(sourceId, timeId, edgeId, attrId, value) {},
-
-        /**
-         * An attribute of an edge has been changed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param edgeId
-         *          id of the edge
-         * @param attrId
-         *          key of the attribute
-         * @param oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        edgeAttributeChanged: function(sourceId, timeId, edgeId, attrId, oldValue, newValue) {},
-
-        /**
-         * An attribute of an edge has been removed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param edgeId
-         *          id of the edge
-         * @param attrId
-         *          key of the attribute
-         * @param oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        edgeAttributeRemoved: function(sourceId, timeId, edgeId, attrId) {},
-
-        /**
-         * An attribute of the graph has been added.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param attrId
-         *          key of the attribute
-         * @param value
-         *          value of the attribute
-         */
-        graphAttributeAdded: function(sourceId, timeId, attrId, value) {},
-
-        /**
-         * An attribute of the graph has been changed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param attrId
-         *          key of the attribute
-         * @param oldValue
-         *          previous value of the attribute
-         * @param newValue
-         *          new value of the attribute
-         */
-        graphAttributeChanged: function(sourceId, timeId, attrId, oldValue, newValue) {},
-
-        /**
-         * An attribute of the graph has been removed.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param attrId
-         *          key of the attribute
-         */
-        graphAttributeRemoved: function(sourceId, timeId, attrId) {},
-
-        /**
-         * The graph has been cleared.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         */
-        graphCleared: function(sourceId, timeId) {},
-
-        /**
-         * A new step has begun.
-         *
-         * @param sourceId
-         *          id of the source who send the event
-         * @param timeId
-         *          timeId of the event
-         * @param step
-         *          timestamp of the step
-         */
-        stepBegins: function(sourceId, timeId, step) {}
-    };
-
-    /**
-     * Build a new Element object. Element is the base for GraphStream
-     * objects with attributes.
+     * Send a edgeAttributeAdded event.
      *
-     * @param graph
-     *          the graph object containing the element
-     * @param type
-     *          type of element given as a string
-     * @param id
-     *          id of the element, should be unique according to the
-     *          graph and type
+     * @param edgeId
+     *          id of the edge
+     * @param attrid
+     *          key of the attribute
+     * @param value
+     *          value of the attribute
      */
+    sendEdgeAttributeAdded: function(edgeId, attrId, value) {
+      var t = this.newTimeId();
 
-    function Element(graph, type, id) {
-        this.id = id;
-        this.type = type;
-        this.graph = graph;
-        this.attributes = {};
-    }
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].edgeAttributeAdded(this.id, t, edgeId, attrId, value);
+    },
 
-    /*
-     * The Element prototype
+    /**
+     * Send a edgeAttributeChanged event.
+     *
+     * @param edgeId
+     *          id of the edge
+     * @param attrid
+     *          key of the attribute
+     * @param [optional] oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
      */
-    Element.prototype = {
-        /**
-         * Get an attribute of this element.
-         *
-         * @param key
-         *          key of the attribute
-         */
-        getAttribute: function(key) {
-            return this.attributes[key];
-        },
+    sendEdgeAttributeChanged: function(edgeId, attrId, oldValue, newValue) {
+      var t = this.newTimeId();
 
-        /**
-         * Set an attribute of this element.
-         *
-         * @param key
-         *          key of the attribute
-         * @param value
-         *          new value of the attribute
-         */
-        setAttribute: function(key, value) {
-            this.attributes[key] = value;
-        },
+      if (newValue === undefined)
+        newValue = oldValue;
 
-        /**
-         * Test if this element contains an attribute.
-         *
-         * @param key
-         *          key of the attribute
-         */
-        hasAttribute: function(key) {
-            return this.attributes.hasOwnProperty(key);
-        },
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].edgeAttributeChanged(this.id, t, edgeId, attrId,
+          oldValue, newValue);
+    },
 
-        removeAttribute: function(key) {
-            delete this.attributes[key];
-        },
+    /**
+     * Send a edgeAttributeRemoved event.
+     *
+     * @param edgeId
+     *          id of the edge
+     * @param attrid
+     *          key of the attribute
+     */
+    sendEdgeAttributeRemoved: function(edgeId, attrId) {
+      var t = this.newTimeId();
 
-        setFill: function(color) {},
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].edgeAttributeRemoved(this.id, t, edgeId, attrId);
+    },
 
-        setStroke: function(color) {},
+    /**
+     * Send a graphAttributeAdded event.
+     *
+     * @param attrid
+     *          key of the attribute
+     * @param value
+     *          value of the attribute
+     */
+    sendGraphAttributeAdded: function(attrId, value) {
+      var t = this.newTimeId();
 
-        setStrokeWidth: function(size) {},
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].graphAttributeAdded(this.id, t, attrId);
+    },
 
-        setSize: function(size) {},
+    /**
+     * Send a graphAttributeChanged event.
+     *
+     * @param attrid
+     *          key of the attribute
+     * @param [optional] oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
+     */
+    sendGraphAttributeChanged: function(attrId, oldValue, newValue) {
+      var t = this.newTimeId();
 
-        setLabel: function(label) {},
+      if (newValue === undefined)
+        newValue = oldValue;
 
-        setStyle: function(style) {
-            var styles = style.split(/\s*;\s*/),
-                colors,
-                i,
-                t;
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].graphAttributeChanged(this.id, t, attrId, oldValue,
+          newValue);
+    },
 
-            for (i = 0; i < styles.length; i++) {
-                if (styles[i] === '')
-                    continue;
-                t = styles[i].split(/\s*:\s*/);
+    /**
+     * Send a graphAttributeRemoved event.
+     *
+     * @param attrid
+     *          key of the attribute
+     */
+    sendGraphAttributeRemoved: function(attrId) {
+      var t = this.newTimeId();
 
-                //
-                // Using GraphStream CSS Reference 1.2
-                //
-                switch (t[0]) {
-                    case 'fill-color':
-                        colors = t[1].split(/\s*,\s*/);
-                        this.setFill(colors[0]);
-                        break;
-                    case 'stroke-color':
-                        colors = t[1].split(/\s*,\s*/);
-                        this.setStroke(colors[0]);
-                        break;
-                    case 'stroke-width':
-                        this.setStrokeWidth(getSize(this, t[1]));
-                        break;
-                    case 'z-index':
-                        this.setZIndex(t[1]);
-                        break;
-                    case 'size':
-                        this.setSize(getSize(this, t[1]));
-                        break;
-                    case 'fill-image':
-                    case 'fill-mode':
-                    case 'stroke-mode':
-                    case 'padding':
-                    case 'shadow-mode':
-                    case 'shadow-color':
-                    case 'shadow-width':
-                    case 'shadow-offset':
-                    case 'text-mode':
-                    case 'text-background-mode':
-                    case 'text-visibility-mode':
-                    case 'text-visibility':
-                    case 'text-color':
-                    case 'text-background-color':
-                    case 'text-style':
-                    case 'text-alignment':
-                    case 'text-padding':
-                    case 'text-offset':
-                    case 'text-font':
-                    case 'text-size':
-                    case 'icon':
-                    case 'icon-mode':
-                    case 'visibility':
-                    case 'visibility-mode':
-                    case 'size-mode':
-                    case 'shape':
-                    case 'arrow-shape':
-                    case 'arrow-image':
-                    case 'arrow-size':
-                    case 'shape-points':
-                        exports.console.log('[GraphStream CSS] unsupported property "' + t[0] + '" for ' + this.type);
-                        break;
-                    default:
-                        exports.console.log('[GraphStream CSS] unknown property "' + t[0] + '" for ' + this.type);
-                        break;
-                }
-            }
-        },
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].graphAttributeRemoved(this.id, t, attrId);
+    },
 
-        updateShapePosition: function() {}
-    };
+    /**
+     * Send a graphClearedEvent.
+     */
+    sendGraphCleared: function() {
+      var t = this.newTimeId();
 
-    function Node(graph, id) {
-        Element.call(this, graph, 'Node', id);
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].graphCleared(this.id, t);
+    },
 
-        this.edges = {};
+    /**
+     * Send a stepBegins event.
+     *
+     * @param step
+     *          step
+     */
+    sendStepBegins: function(step) {
+      var t = this.newTimeId();
 
-        this._x = 0;
-        this._y = 0;
-
-        this.pixelX = graph.randomPixelX();
-        this.pixelY = graph.randomPixelY();
-
-        this.index = graph.indexedNodes.length;
-        graph.indexedNodes.push(this);
+      for (var i = 0; i < this.sinks.length; i++)
+        this.sinks[i].stepBegins(this.id, t, step);
     }
+  };
 
-    Node.prototype = {
-        registerEdge: function(e) {
-            this.edges[e.id] = e;
-        },
+  /**
+   * Build a new Sink object.
+   */
 
-        unregisterEdge: function(e) {
-            delete this.edges[e.id];
-        },
+  function Sink() {}
 
-        x: function(x) {
-            if (typeof(x) === 'undefined')
-                return this._x;
+  /*
+   * The Sink prototype
+   */
+  Sink.prototype = {
+    /**
+     * A new node has been added.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param nodeId
+     *          id of the new node
+     */
+    nodeAdded: function(sourceId, timeId, nodeId) {},
 
-            this._x = x;
+    /**
+     * A node will be removed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param nodeId
+     *          id of the node being removed
+     */
+    nodeRemoved: function(sourceId, timeId, nodeId) {},
 
-            for (var eid in this.edges)
-                this.edges[eid].nodePositionChanged(this);
-        },
+    /**
+     * A new attribute has been added on a node.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param nodeId
+     *          id of the node
+     * @param attrId
+     *          key of the attribute
+     * @param value
+     *          value of the attribute
+     */
+    nodeAttributeAdded: function(sourceId, timeId, nodeId, attrId, value) {},
 
-        y: function(y) {
-            if (typeof(y) === 'undefined')
-                return this._y;
+    /**
+     * An attribute of a node has been changed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param nodeId
+     *          id of the node
+     * @param attrId
+     *          key of the attribute
+     * @param oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
+     */
+    nodeAttributeChanged: function(sourceId, timeId, nodeId, attrId, oldValue,
+      newValue) {},
 
-            this._y = y;
+    /**
+     * An attribute of a node has been removed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param nodeId
+     *          id of the node
+     * @param attrId
+     *          key of the attribute
+     */
+    nodeAttributeRemoved: function(sourceId, timeId, nodeId, attrId) {},
 
-            for (var eid in this.edges)
-                this.edges[eid].nodePositionChanged(this);
-        },
+    /**
+     * A new edge has been added.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param edgeId
+     *          id of the new edge
+     * @param source
+     *          id of the source node of the edge
+     * @param target
+     *          id of the target node of the edge
+     * @param directed
+     *          true if edge is directed
+     */
+    edgeAdded: function(sourceId, timeId, edgeId, source, target, directed) {},
 
-        setXY: function(x, y) {
-            this._x = x;
-            this._y = y;
+    /**
+     * A new edge will be removed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param edgeId
+     *          id of the edge being removed
+     */
+    edgeRemoved: function(sourceId, timeId, edgeId) {},
 
-            this.graph.viewbox.check(x, y);
-            this.graph.viewbox.update(this);
-        },
+    /**
+     * An attribute of an edge has been added.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param edgeId
+     *          id of the edge
+     * @param attrId
+     *          key of the attribute
+     * @param value
+     *          value of the attribute
+     */
+    edgeAttributeAdded: function(sourceId, timeId, edgeId, attrId, value) {},
 
-        setPixelXY: function(x, y) {
-            this.pixelX = x;
-            this.pixelY = y;
+    /**
+     * An attribute of an edge has been changed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param edgeId
+     *          id of the edge
+     * @param attrId
+     *          key of the attribute
+     * @param oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
+     */
+    edgeAttributeChanged: function(sourceId, timeId, edgeId, attrId, oldValue,
+      newValue) {},
 
-            this.updateShapePosition();
+    /**
+     * An attribute of an edge has been removed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param edgeId
+     *          id of the edge
+     * @param attrId
+     *          key of the attribute
+     * @param oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
+     */
+    edgeAttributeRemoved: function(sourceId, timeId, edgeId, attrId) {},
 
-            for (var eid in this.edges)
-                this.edges[eid].nodePositionChanged();
+    /**
+     * An attribute of the graph has been added.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param attrId
+     *          key of the attribute
+     * @param value
+     *          value of the attribute
+     */
+    graphAttributeAdded: function(sourceId, timeId, attrId, value) {},
 
-            return this;
+    /**
+     * An attribute of the graph has been changed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param attrId
+     *          key of the attribute
+     * @param oldValue
+     *          previous value of the attribute
+     * @param newValue
+     *          new value of the attribute
+     */
+    graphAttributeChanged: function(sourceId, timeId, attrId, oldValue,
+      newValue) {},
+
+    /**
+     * An attribute of the graph has been removed.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param attrId
+     *          key of the attribute
+     */
+    graphAttributeRemoved: function(sourceId, timeId, attrId) {},
+
+    /**
+     * The graph has been cleared.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     */
+    graphCleared: function(sourceId, timeId) {},
+
+    /**
+     * A new step has begun.
+     *
+     * @param sourceId
+     *          id of the source who send the event
+     * @param timeId
+     *          timeId of the event
+     * @param step
+     *          timestamp of the step
+     */
+    stepBegins: function(sourceId, timeId, step) {}
+  };
+
+  /**
+   * Build a new Element object. Element is the base for GraphStream
+   * objects with attributes.
+   *
+   * @param graph
+   *          the graph object containing the element
+   * @param type
+   *          type of element given as a string
+   * @param id
+   *          id of the element, should be unique according to the
+   *          graph and type
+   */
+
+  function Element(graph, type, id) {
+    this.id = id;
+    this.type = type;
+    this.graph = graph;
+    this.attributes = {};
+  }
+
+  /*
+   * The Element prototype
+   */
+  Element.prototype = {
+    /**
+     * Get an attribute of this element.
+     *
+     * @param key
+     *          key of the attribute
+     */
+    getAttribute: function(key) {
+      return this.attributes[key];
+    },
+
+    /**
+     * Set an attribute of this element.
+     *
+     * @param key
+     *          key of the attribute
+     * @param value
+     *          new value of the attribute
+     */
+    setAttribute: function(key, value) {
+      if (value === null) {
+        delete this.attributes[key];
+      } else {
+        this.attributes[key] = value;
+      }
+    },
+
+    /**
+     * Test if this element contains an attribute.
+     *
+     * @param key
+     *          key of the attribute
+     */
+    hasAttribute: function(key) {
+      return this.attributes.hasOwnProperty(key);
+    },
+
+    removeAttribute: function(key) {
+      delete this.attributes[key];
+    },
+
+    setFill: function(color) {},
+
+    setStroke: function(color) {},
+
+    setStrokeWidth: function(size) {},
+
+    setSize: function(size) {},
+
+    setLabel: function(label) {},
+
+    setStyle: function(style) {
+      var styles = style.split(/\s*;\s*/),
+        colors,
+        i,
+        t;
+
+      for (i = 0; i < styles.length; i++) {
+        if (styles[i] === '')
+          continue;
+        t = styles[i].split(/\s*:\s*/);
+
+        //
+        // Using GraphStream CSS Reference 1.2
+        //
+        switch (t[0]) {
+          case 'fill-color':
+            colors = t[1].split(/\s*,\s*/);
+            this.setFill(colors[0]);
+            break;
+          case 'stroke-color':
+            colors = t[1].split(/\s*,\s*/);
+            this.setStroke(colors[0]);
+            break;
+          case 'stroke-width':
+            this.setStrokeWidth(getSize(this, t[1]));
+            break;
+          case 'z-index':
+            this.setZIndex(t[1]);
+            break;
+          case 'size':
+            this.setSize(getSize(this, t[1]));
+            break;
+          case 'fill-image':
+          case 'fill-mode':
+          case 'stroke-mode':
+          case 'padding':
+          case 'shadow-mode':
+          case 'shadow-color':
+          case 'shadow-width':
+          case 'shadow-offset':
+          case 'text-mode':
+          case 'text-background-mode':
+          case 'text-visibility-mode':
+          case 'text-visibility':
+          case 'text-color':
+          case 'text-background-color':
+          case 'text-style':
+          case 'text-alignment':
+          case 'text-padding':
+          case 'text-offset':
+          case 'text-font':
+          case 'text-size':
+          case 'icon':
+          case 'icon-mode':
+          case 'visibility':
+          case 'visibility-mode':
+          case 'size-mode':
+          case 'shape':
+          case 'arrow-shape':
+          case 'arrow-image':
+          case 'arrow-size':
+          case 'shape-points':
+            exports.console.log('[GraphStream CSS] unsupported property "' +
+              t[0] + '" for ' + this.type);
+            break;
+          default:
+            exports.console.log('[GraphStream CSS] unknown property "' + t[0] +
+              '" for ' + this.type);
+            break;
         }
-    };
+      }
+    },
 
-    function Edge(graph, id, source, target, directed) {
-        Element.call(this, graph, 'Edge', id);
+    updateShapePosition: function() {}
+  };
 
-        this.source = source;
-        this.target = target;
-        this.directed = directed;
-        this.points = [{
-            x: source.pixelX,
-            y: source.pixelY
-        }, {
-            x: target.pixelX,
-            y: target.pixelY
-        }];
+  function Node(graph, id) {
+    Element.call(this, graph, 'Node', id);
 
-        this.index = graph.indexedEdges.length;
-        graph.indexedEdges.push(this);
+    this.edges = {};
+
+    this._x = 0;
+    this._y = 0;
+
+    this.pixelX = graph.randomPixelX();
+    this.pixelY = graph.randomPixelY();
+
+    this.index = graph.indexedNodes.length;
+    graph.indexedNodes.push(this);
+  }
+
+  Node.prototype = {
+    registerEdge: function(e) {
+      this.edges[e.id] = e;
+    },
+
+    unregisterEdge: function(e) {
+      delete this.edges[e.id];
+    },
+
+    x: function(x) {
+      if (typeof(x) === 'undefined')
+        return this._x;
+
+      this._x = x;
+
+      for (var eid in this.edges)
+        this.edges[eid].nodePositionChanged(this);
+    },
+
+    y: function(y) {
+      if (typeof(y) === 'undefined')
+        return this._y;
+
+      this._y = y;
+
+      for (var eid in this.edges)
+        this.edges[eid].nodePositionChanged(this);
+    },
+
+    z: function(z) {
+      if (typeof(z) === 'undefined')
+        return this._z;
+
+      this._z = z;
+
+      for (var eid in this.edges)
+        this.edges[eid].nodePositionChanged(this);
+    },
+
+    setXY: function(x, y) {
+      this._x = x;
+      this._y = y;
+
+      this.graph.viewbox.check(x, y);
+      this.graph.viewbox.update(this);
+    },
+    setXYZ: function(x, y, z) {
+      this._z = z;
+      this.setXY(x, y);
+    },
+
+    setPixelXY: function(x, y) {
+      this.pixelX = x;
+      this.pixelY = y;
+
+      this.updateShapePosition();
+
+      for (var eid in this.edges)
+        this.edges[eid].nodePositionChanged();
+
+      return this;
     }
+  };
 
-    Edge.prototype = {
-        nodePositionChanged: function() {
-            this.points[0].x = this.source.pixelX;
-            this.points[0].y = this.source.pixelY;
-            this.points[this.points.length - 1].x = this.target.pixelX;
-            this.points[this.points.length - 1].y = this.target.pixelY;
+  function Edge(graph, id, source, target, directed) {
+    Element.call(this, graph, 'Edge', id);
 
-            this.updateShapePosition();
+    this.source = source;
+    this.target = target;
+    this.directed = directed;
+    this.points = [{
+      x: source.pixelX,
+      y: source.pixelY
+    }, {
+      x: target.pixelX,
+      y: target.pixelY
+    }];
+
+    this.index = graph.indexedEdges.length;
+    graph.indexedEdges.push(this);
+  }
+
+  Edge.prototype = {
+    nodePositionChanged: function() {
+      this.points[0].x = this.source.pixelX;
+      this.points[0].y = this.source.pixelY;
+      this.points[this.points.length - 1].x = this.target.pixelX;
+      this.points[this.points.length - 1].y = this.target.pixelY;
+
+      // Update 3D edges.
+      this.shape.geometry.verticesNeedUpdate = true;
+
+      this.updateShapePosition();
+    }
+  };
+
+  extend(Element.prototype, Node.prototype);
+  extend(Element.prototype, Edge.prototype);
+
+  function Graph(selector, context) {
+    Source.call(this, selector);
+
+    if (typeof(context) === 'undefined')
+      context = 'default';
+
+    if (!contexts.hasOwnProperty(context))
+      throw new Error('context "' + context + '" is not registered');
+
+    this.context = new contexts[context](selector);
+
+    this.nodes = {};
+    this.edges = {};
+
+    this.nodesCount = 0;
+    this.edgesCount = 0;
+
+    this.indexedNodes = [];
+    this.indexedEdges = [];
+
+    this.default_node_style =
+      'fill-color:#89a9e3;size:10px;stroke-color:#333333;stroke-width:5px;';
+    this.default_node_size = 15;
+    this.default_edge_style = 'stroke-color:#333333;stroke-width:2px;';
+
+    // 3D default size. Probably not very useful...
+    this.default_node_size_3d = 7;
+
+    this.viewbox = new ViewBox(this);
+    this.dispatch = new Sink();
+
+    //this._width = jQuery(this.context.getCanvas()).width();
+    //this._height = jQuery(this.context.getCanvas()).height();
+    this._width = exports.jQuery(this.context.getContainer()).width();
+    this._height = exports.jQuery(this.context.getContainer()).height();
+  }
+
+  Graph.prototype = {
+    width: function() {
+      return this._width;
+    },
+
+    height: function() {
+      return this._height;
+    },
+
+    an: function(id) {
+      if (this.nodes.hasOwnProperty(id)) {
+        exports.console.log('[warning] node exists "' + id + '"');
+        return;
+      }
+
+      var n = this.context.createNode(this, id);
+      this.nodes[id] = n;
+      this.nodesCount++;
+      n.setStyle(this.default_node_style);
+
+      this.sendNodeAdded(id);
+    },
+
+    cn: function(id, key, value) {
+      var n = this.nodes[id];
+
+      if (value === undefined) {
+        n.removeAttribute(key);
+        this.sendNodeAttributeRemoved(id, key);
+      } else {
+        if (key === 'xy' || key === 'xyz' || key === 'x' || key === 'y' || key === 'z') {
+          var x,y,z;
+          switch (key) {
+            case 'x':
+              x = value;
+              break;
+            case 'y':
+              y = value;
+              break;
+            case 'z':
+              z = value;
+              break;
+            case 'xy':
+              x = value[0];
+              y = value[1];
+              break;
+            case 'xyz':
+              x = value[0];
+              y = value[1];
+              z = value[2];
+          }
+          n.setXYZ(x, y, z);
         }
-    };
+        else if (key === 'size')
+          n.setSize(value);
+        else if (key === 'style')
+          n.setStyle(value);
+        else if (key === 'label')
+          n.setLabel(value);
+        else
+          n.setAttribute(key, value);
+        this.sendNodeAttributeChanged(id, key, value);
+      }
+    },
 
-    extend(Element.prototype, Node.prototype);
-    extend(Element.prototype, Edge.prototype);
+    setXYZ: function(id, x, y, z) {
+      var n = this.nodes[id];
+      n.setXYZ(x, y, z);
+    },
 
-    function Graph(selector, context) {
-        Source.call(this, selector);
+    setPixelXY: function(id, x, y) {
+      var n = this.nodes[id];
+      n.setPixelXY(x, y);
+    },
 
-        if (typeof(context) === 'undefined')
-            context = 'default';
+    dn: function(id) {
+      var edgeToRemove = [];
+      var n = this.nodes[id];
 
-        if (!contexts.hasOwnProperty(context))
-            throw new Error('context "' + context + '" is not registered');
+      for (var eid in this.edges) {
+        if (this.edges[eid].source.id === id || this.edges[eid].target.id ===
+          id)
+          edgeToRemove.push(this.edges[eid]);
+      }
 
-        this.context = new contexts[context](selector);
+      for (var i = 0; i < edgeToRemove.length; i++)
+        this.de(edgeToRemove[i].id);
 
-        this.nodes = {length:0};
-        this.edges = {length:0};
+      this.sendNodeRemoved(id);
 
-        this.indexedNodes = [];
-        this.indexedEdges = [];
+      this.context.removeNode(this, n);
 
-        this.default_node_style = 'fill-color:#89a9e3;size:10px;stroke-color:#333333;stroke-width:5px;';
-        this.default_node_size = 15;
-        this.default_edge_style = 'stroke-color:#333333;stroke-width:2px;';
+      if (n.index === this.indexedNodes.length - 1)
+        this.indexedNodes.pop();
+      else {
+        var lastNode = this.indexedNodes[this.indexedNodes.length - 1];
+        var oldIndex = lastNode.index,
+          newIndex = n.index;
 
-        this.viewbox = new ViewBox(this);
-        this.dispatch = new Sink();
+        lastNode.index = newIndex;
+        this.indexedNodes[newIndex] = lastNode;
+        this.indexedNodes.pop();
 
-        //this._width = jQuery(this.context.getCanvas()).width();
-        //this._height = jQuery(this.context.getCanvas()).height();
-        this._width = exports.jQuery(this.context.getContainer()).width();
-        this._height = exports.jQuery(this.context.getContainer()).height();
+        this.context.nodeIndexChanged(lastNode, oldIndex, newIndex);
+      }
+
+      delete this.nodes[id];
+      this.nodesCount--;
+    },
+
+    ae: function(id, src, trg, directed) {
+      if (this.nodes[src] === undefined) {
+        exports.console.log('node "' + src + '" not found for edge "' + id +
+          '"');
+        return;
+      }
+
+      if (this.nodes[trg] === undefined) {
+        exports.console.log('node "' + trg + '" not found for edge "' + id +
+          '"');
+        return;
+      }
+
+      var e = this.context.createEdge(this, id, this.nodes[src], this.nodes[
+        trg], directed);
+      this.edges[id] = e;
+
+      e.setStyle(this.default_edge_style);
+
+      this.nodes[src].edges[id] = e;
+      this.nodes[trg].edges[id] = e;
+
+      this.edgesCount++;
+      this.sendEdgeAdded(id, src, trg, directed);
+    },
+
+    ce: function(id, key, value) {
+      var e = this.edges[id];
+
+      if (typeof(value) === 'undefined') {
+        e.removeAttribute(e);
+        this.sendEdgeAttributeRemoved(id, key);
+      } else {
+        if (key === 'style')
+          e.setStyle(value);
+        else if (key === 'size')
+          e.setSize(value);
+        else
+          e.setAttribute(key, value);
+        this.sendEdgeAttributeChanged(id, key, value);
+      }
+    },
+
+    de: function(id) {
+      var e = this.edges[id];
+      if (typeof e === 'undefined')
+        return;
+
+      this.sendEdgeRemoved(id);
+
+      this.context.removeEdge(this, e);
+
+      delete e.source.edges[id];
+      if (e.source !== e.target) {
+        delete e.target.edges[id];
+      }
+
+      if (e.index === this.indexedEdges.length - 1)
+        this.indexedEdges.pop();
+      else {
+        var lastEdge = this.indexedEdges[this.indexedEdges.length - 1];
+        var oldIndex = lastEdge.index,
+          newIndex = e.index;
+
+        lastEdge.index = newIndex;
+        this.indexedEdges[newIndex] = lastEdge;
+        this.indexedEdges.pop();
+
+        this.context.edgeIndexChanged(lastEdge, oldIndex, newIndex);
+      }
+
+      delete this.edges[id];
+      this.edgesCount--;
+
+    },
+
+    cg: function(k, v) {
+
+    },
+
+    cl: function() {
+      this.context.clear();
+      this.sendGraphCleared();
+    },
+
+    st: function(step) {
+      this.sendStepBegins(step);
+    },
+
+    randomPixelX: function(x) {
+      if (x === undefined)
+        x = Math.random();
+
+      return~~ (x * this.width());
+    },
+
+    randomPixelY: function(y) {
+      if (y === undefined)
+        y = Math.random();
+
+      return~~ (y * this.height());
+    },
+
+    nodeAdded: function(sourceId, timeId, nodeId) {
+      this.an(nodeId);
+    },
+
+    nodeRemoved: function(sourceId, timeId, nodeId) {
+      this.dn(nodeId);
+    },
+
+    nodeAttributeAdded: function(sourceId, timeId, nodeId, key, value) {
+      this.cn(nodeId, key, value);
+    },
+
+    nodeAttributeChanged: function(sourceId, timeId, nodeId, key, oldValue,
+      newValue) {
+      this.cn(nodeId, key, newValue);
+    },
+
+    nodeAttributeRemoved: function(sourceId, timeId, nodeId, key) {
+      this.cn(nodeId, key, null);
+    },
+
+    edgeAdded: function(sourceId, timeId, edgeId, from, to, directed) {
+      this.ae(edgeId, from, to, directed);
+    },
+
+    edgeRemoved: function(sourceId, timeId, edgeId) {
+      this.de(edgeId);
+    },
+
+    edgeAttributeAdded: function(sourceId, timeId, edgeId, key, value) {
+      this.ce(edgeId, key, value);
+    },
+
+    edgeAttributeChanged: function(sourceId, timeId, edgeId, key, oldValue,
+      newValue) {
+      this.ce(edgeId, key, newValue);
+    },
+
+    edgeAttributeRemoved: function(sourceId, timeId, edgeId, key) {
+      this.ce(edgeId, key, null);
+    },
+
+    graphAttributeAdded: function(sourceId, timeId, key, value) {
+      this.cg(key, value);
+    },
+
+    graphAttributeChanged: function(sourceId, timeId, key, oldValue, newValue) {
+      this.cg(key, newValue);
+    },
+
+    graphAttributeRemoved: function(sourceId, timeId, key) {
+      this.cg(key, null);
+    },
+
+    graphCleared: function(sourceId, timeId) {
+      this.cl();
+    },
+
+    stepBegins: function(sourceId, timeId, step) {
+      this.st(step);
     }
+  };
 
-    Graph.prototype = {
-        width: function() {
-            return this._width;
-        },
+  extend(Source.prototype, Graph.prototype);
 
-        height: function() {
-            return this._height;
-        },
+  function Context(sel) {
+    this.container = document.querySelector(sel);
+  }
 
-        nodesCount: function() {
-            return this.nodes.length;
-        },
+  Context.prototype = {
+    getContainer: function() {
+      return this.container;
+    },
+    createNode: function(graph, nodeId) {
+      return new Node(graph, nodeId);
+    },
+    removeNode: function(graph, node) {},
+    createEdge: function(graph, edgeId, source, target, directed) {
+      return new Edge(graph, edgeId, source, target, directed);
+    },
+    removeEdge: function(graph, edge) {},
+    clear: function(graph) {},
+    zoom: function(factor) {},
+    nodeIndexChanged: function(node, oldIndex, newIndex) {},
+    edgeIndexChanged: function(edge, oldIndex, newIndex) {}
+  };
 
-        edgesCount: function() {
-            return this.edges.length;
-        },
+  function ViewBox(graph) {
+    this.graph = graph;
+    this.minx = Infinity;
+    this.miny = Infinity;
+    this.maxx = -Infinity;
+    this.maxy = -Infinity;
+    this.padding = {
+      top: 15,
+      right: 15,
+      bottom: 15,
+      left: 15
+    };
+  }
 
-        an: function(id) {
-            if (this.nodes.hasOwnProperty(id)) {
-                exports.console.log('[warning] node exists "' + id + '"');
-                return;
-            }
+  ViewBox.prototype = {
+    reset: function() {
+      this.minx = Infinity;
+      this.miny = Infinity;
+      this.maxx = -Infinity;
+      this.maxy = -Infinity;
+    },
 
-            var n = this.context.createNode(this, id);
-            this.nodes[id] = n;
-            this.nodes.length++
-            n.setStyle(this.default_node_style);
+    check: function(x, y) {
+      var changed = false;
 
-            this.sendNodeAdded(id);
-        },
+      if (x < this.minx) {
+        changed = true;
+        this.minx = x;
+      }
 
-        cn: function(id, key, value) {
-            var n = this.nodes[id];
+      if (y < this.miny) {
+        changed = true;
+        this.miny = y;
+      }
 
-            if (value === undefined) {
-                n.removeAttribute(key);
-                this.sendNodeAttributeRemoved(id, key);
-            } else {
-                if (key === 'xy' || key === 'xyz')
-                    n.setXY(value[0], value[1]);
-                else if (key === 'size')
-                    n.setSize(value);
-                else if (key === 'style')
-                    n.setStyle(value);
-                else if (key === 'label')
-                    n.setLabel(value);
+      if (x > this.maxx) {
+        changed = true;
+        this.maxx = x;
+      }
 
-                n.setAttribute(key, value);
-                this.sendNodeAttributeChanged(id, key, value);
-            }
-        },
+      if (y > this.maxy) {
+        changed = true;
+        this.maxy = y;
+      }
 
-        setXY: function(id, x, y) {
-            var n = this.nodes[id];
-            n.setXY(x, y);
-        },
-
-        setPixelXY: function(id, x, y) {
-            var n = this.nodes[id];
-            n.setPixelXY(x, y);
-        },
-
-        dn: function(id) {
-            var edgeToRemove = [];
-            var n = this.nodes[id];
-
-            for (var eid in this.edges) {
-                if (this.edges[eid].source.id === id || this.edges[eid].target.id === id)
-                    edgeToRemove.push(this.edges[eid]);
-            }
-
-            for (var i = 0; i < edgeToRemove.length; i++)
-                this.de(edgeToRemove[i].id);
-
-            this.sendNodeRemoved(id);
-
-            this.context.removeNode(this, n);
-
-            if (n.index === this.indexedNodes.length - 1)
-                this.indexedNodes.pop();
-            else {
-                var lastNode = this.indexedNodes[this.indexedNodes.length - 1];
-                var oldIndex = lastNode.index,
-                    newIndex = n.index;
-
-                lastNode.index = newIndex;
-                this.indexedNodes[newIndex] = lastNode;
-                this.indexedNodes.pop();
-
-                this.context.nodeIndexChanged(lastNode, oldIndex, newIndex);
-            }
-
-            delete this.nodes[id];
-            this.nodes.length--;
-        },
-
-        ae: function(id, src, trg, directed) {
-            if (this.nodes[src] === undefined) {
-                exports.console.log('node "' + src + '" not found for edge "' + id + '"');
-                return;
-            }
-
-            if (this.nodes[trg] === undefined) {
-                exports.console.log('node "' + trg + '" not found for edge "' + id + '"');
-                return;
-            }
-
-            var e = this.context.createEdge(this, id, this.nodes[src], this.nodes[trg], directed);
-            this.edges[id] = e;
-            this.edges.length++;
-
-            e.setStyle(this.default_edge_style);
-
-            this.nodes[src].edges[id] = e;
-            this.nodes[trg].edges[id] = e;
-
-            this.edgesCount++;
-            this.sendEdgeAdded(id, src, trg, directed);
-        },
-
-        ce: function(id, key, value) {
-            var e = this.edges[id];
-
-            if (typeof(value) === 'undefined') {
-                e.removeAttribute(e);
-                this.sendEdgeAttributeRemoved(id, key);
-            } else {
-                if (key === 'style')
-                    e.setStyle(value);
-                else if (key === 'size')
-                    e.setSize(value);
-
-                e.setAttribute(key, value);
-                this.sendEdgeAttributeChanged(id, key, value);
-            }
-        },
-
-        de: function(id) {
-            var e = this.edges[id];
-            if(typeof e === 'undefined')
-                return;
-
-            this.sendEdgeRemoved(id);
-
-            this.context.removeEdge(this, e);
-
-            delete e.source.edges[id];
-            if(e.source !== e.target){
-                delete e.target.edges[id];
-            }
-
-            if (e.index === this.indexedEdges.length - 1)
-                this.indexedEdges.pop();
-            else {
-                var lastEdge = this.indexedEdges[this.indexedEdges.length - 1];
-                var oldIndex = lastEdge.index,
-                    newIndex = e.index;
-
-                lastEdge.index = newIndex;
-                this.indexedEdges[newIndex] = lastEdge;
-                this.indexedEdges.pop();
-
-                this.context.edgeIndexChanged(lastEdge, oldIndex, newIndex);
-            }
-
-            delete this.edges[id];
-            this.edges.length--;
-
-        },
-
-        cg: function(k, v) {
-
-        },
-
-        cl: function() {
-            this.context.clear();
-            this.sendGraphCleared();
-        },
-
-        st: function(step) {
-            this.sendStepBegins(step);
-        },
-
-        randomPixelX: function(x) {
-            if (x === undefined)
-                x = Math.random();
-
-            return~~ (x * this.width());
-        },
-
-        randomPixelY: function(y) {
-            if (y === undefined)
-                y = Math.random();
-
-            return~~ (y * this.height());
-        },
-
-        nodeAdded: function(sourceId, timeId, nodeId) {
-            this.an(nodeId);
-        },
-
-        nodeRemoved: function(sourceId, timeId, nodeId) {
-            this.dn(nodeId);
-        },
-
-        nodeAttributeAdded: function(sourceId, timeId, nodeId, key, value) {
-            this.cn(nodeId, key, value);
-        },
-
-        nodeAttributeChanged: function(sourceId, timeId, nodeId, key, oldValue, newValue) {
-            this.cn(nodeId, key, newValue);
-        },
-
-        nodeAttributeRemoved: function(sourceId, timeId, nodeId, key) {
-            this.cn(nodeId, key, null);
-        },
-
-        edgeAdded: function(sourceId, timeId, edgeId, from, to, directed) {
-            this.ae(edgeId, from, to, directed);
-        },
-
-        edgeRemoved: function(sourceId, timeId, edgeId) {
-            this.de(edgeId);
-        },
-
-        edgeAttributeAdded: function(sourceId, timeId, edgeId, key, value) {
-            this.ce(edgeId, key, value);
-        },
-
-        edgeAttributeChanged: function(sourceId, timeId, edgeId, key, oldValue, newValue) {
-            this.ce(edgeId, key, newValue);
-        },
-
-        edgeAttributeRemoved: function(sourceId, timeId, edgeId, key) {
-            this.ce(edgeId, key, null);
-        },
-
-        graphAttributeAdded: function(sourceId, timeId, key, value) {
-            this.cg(key, value);
-        },
-
-        graphAttributeChanged: function(sourceId, timeId, key, oldValue, newValue) {
-            this.cg(key, newValue);
-        },
-
-        graphAttributeRemoved: function(sourceId, timeId, key) {
-            this.cg(key, null);
-        },
-
-        graphCleared: function(sourceId, timeId) {
-            this.cl();
-        },
-
-        stepBegins: function(sourceId, timeId, step) {
-            this.st(step);
+      if (changed) {
+        if (this.minx === this.maxx) {
+          this.minx -= 0.1;
+          this.maxx += 0.1;
         }
-    };
 
-    extend(Source.prototype, Graph.prototype);
-
-    function Context(sel) {
-        this.container = document.querySelector(sel);
-    }
-
-    Context.prototype = {
-        getContainer: function() {
-            return this.container;
-        },
-        createNode: function(graph, nodeId) {
-            return new Node(graph, nodeId);
-        },
-        removeNode: function(graph, node) {},
-        createEdge: function(graph, edgeId, source, target, directed) {
-            return new Edge(graph, edgeId, source, target, directed);
-        },
-        removeEdge: function(graph, edge) {},
-        clear: function(graph) {},
-        zoom: function(factor) {},
-        nodeIndexChanged: function(node, oldIndex, newIndex) {},
-        edgeIndexChanged: function(edge, oldIndex, newIndex) {}
-    };
-
-    function ViewBox(graph) {
-        this.graph = graph;
-        this.minx = Infinity;
-        this.miny = Infinity;
-        this.maxx = -Infinity;
-        this.maxy = -Infinity;
-        this.padding = {
-            top: 15,
-            right: 15,
-            bottom: 15,
-            left: 15
-        };
-    }
-
-    ViewBox.prototype = {
-        reset: function() {
-            this.minx = Infinity;
-            this.miny = Infinity;
-            this.maxx = -Infinity;
-            this.maxy = -Infinity;
-        },
-
-        check: function(x, y) {
-            var changed = false;
-
-            if (x < this.minx) {
-                changed = true;
-                this.minx = x;
-            }
-
-            if (y < this.miny) {
-                changed = true;
-                this.miny = y;
-            }
-
-            if (x > this.maxx) {
-                changed = true;
-                this.maxx = x;
-            }
-
-            if (y > this.maxy) {
-                changed = true;
-                this.maxy = y;
-            }
-
-            if (changed) {
-                if (this.minx === this.maxx) {
-                    this.minx -= 0.1;
-                    this.maxx += 0.1;
-                }
-
-                if (this.miny === this.maxy) {
-                    this.miny -= 0.1;
-                    this.maxy += 0.1;
-                }
-
-                this.update();
-            }
-        },
-
-        compute: function() {
-            var mx, my, Mx, My;
-
-            mx = my = Infinity;
-            Mx = My = -Infinity;
-
-            for (var id in this.graph.nodes) {
-                var node = this.graph.nodes[id];
-                mx = Math.min(mx, node._x);
-                my = Math.min(my, node._y);
-                Mx = Math.max(Mx, node._x);
-                My = Math.max(My, node._y);
-            }
-
-            this.minx = mx;
-            this.miny = my;
-            this.maxx = Mx;
-            this.maxy = My;
-
-            this.update();
-        },
-
-        update: function(node) {
-            if (node === undefined) {
-                for (var id in this.graph.nodes)
-                    this.update(this.graph.nodes[id]);
-            } else {
-                var px = (node._x - this.minx) / (this.maxx - this.minx),
-                    py = (node._y - this.miny) / (this.maxy - this.miny);
-
-                px = this.padding.left + (this.graph.width() - this.padding.left - this.padding.right) * px;
-                py = this.padding.bottom + (this.graph.height() - this.padding.bottom - this.padding.top) * py;
-
-                node.setPixelXY(px, py);
-            }
+        if (this.miny === this.maxy) {
+          this.miny -= 0.1;
+          this.maxy += 0.1;
         }
-    };
 
-    var utilsLoadDefaultArgs = {
-        method: 'GET',
-        responseType: ''
-    };
+        this.update();
+      }
+    },
 
-    function utilsLoad(args) {
-        extend(utilsLoadDefaultArgs, args);
+    compute: function() {
+      var mx, my, Mx, My;
 
-        var xhr = new XMLHttpRequest();
-        xhr.open(args.method, args.url, true);
-        xhr.responseType = args.responseType;
+      mx = my = Infinity;
+      Mx = My = -Infinity;
 
-        xhr.send();
+      for (var id in this.graph.nodes) {
+        var node = this.graph.nodes[id];
+        mx = Math.min(mx, node._x);
+        my = Math.min(my, node._y);
+        Mx = Math.max(Mx, node._x);
+        My = Math.max(My, node._y);
+      }
 
-        return xhr;
+      this.minx = mx;
+      this.miny = my;
+      this.maxx = Mx;
+      this.maxy = My;
+
+      this.update();
+    },
+
+    update: function(node) {
+      if (node === undefined) {
+        for (var id in this.graph.nodes)
+          this.update(this.graph.nodes[id]);
+      } else {
+        var px = (node._x - this.minx) / (this.maxx - this.minx),
+          py = (node._y - this.miny) / (this.maxy - this.miny);
+
+        px = this.padding.left + (this.graph.width() - this.padding.left -
+          this.padding.right) * px;
+        py = this.padding.bottom + (this.graph.height() - this.padding.bottom -
+          this.padding.top) * py;
+
+        node.setPixelXY(px, py);
+      }
     }
+  };
 
-    function FileSource(type) {
-        Source.call(this, type);
-        this.type = type;
-    }
+  var utilsLoadDefaultArgs = {
+    method: 'GET',
+    responseType: ''
+  };
 
-    FileSource.prototype = {
-        begin: function(url) {},
-        nextEvents: function() {},
-        nextStep: function() {},
-        end: function() {}
-    };
+  function utilsLoad(args) {
+    extend(utilsLoadDefaultArgs, args);
 
-    extend(Source.prototype, FileSource.prototype);
+    var xhr = new XMLHttpRequest();
+    xhr.open(args.method, args.url, true);
+    xhr.responseType = args.responseType;
+
+    xhr.send();
+
+    return xhr;
+  }
+
+  function FileSource(type) {
+    Source.call(this, type);
+    this.type = type;
+  }
+
+  FileSource.prototype = {
+    begin: function(url) {},
+    nextEvents: function() {},
+    nextStep: function() {},
+    end: function() {}
+  };
+
+  extend(Source.prototype, FileSource.prototype);
 
 
-    var contexts = {
-        'default': Context
-    };
+  var contexts = {
+    'default': Context
+  };
 
-    function registerContext(name, constructor) {
-        contexts[name] = constructor;
-    }
+  function registerContext(name, constructor) {
+    contexts[name] = constructor;
+  }
 
-    var GS = {
-        extend: extend,
-        Node: Node,
-        Edge: Edge,
-        Graph: Graph,
-        Context: Context,
-        Source: Source,
-        Sink: Sink,
-        FileSource: FileSource,
-        registerContext: registerContext
-    };
+  var GS = {
+    extend: extend,
+    Node: Node,
+    Edge: Edge,
+    Graph: Graph,
+    Context: Context,
+    Source: Source,
+    Sink: Sink,
+    FileSource: FileSource,
+    registerContext: registerContext
+  };
 
-    exports.GS = GS;
+  exports.GS = GS;
 }(this));
 
 (function(exports) {
@@ -1859,171 +1915,474 @@
     exports.GS.registerContext('canvas', CanvasContext);
 }(this));
 
+/*
+The GDS Grammar:
+
+<DGS>        ::= <header> ( <event> | <comment> | <EOL> )*
+<header>     ::= <magic> <EOL> <id> <int> <int> <EOL>
+<magic>      ::= "DGS004" | "DGS003"
+<event>      ::= ( <an> | <cn> | <dn> | <ae> | <ce> | <de> | <cg> | <st> | <cl> ) ( <comment> | <EOL> )
+<an>         ::= "an" <id> <attributes>
+<cn>         ::= "cn" <id> <attributes>
+<dn>         ::= "dn" <id>
+<ae>         ::= "ae" <id> <id> ( <direction> )? <id> <attributes>
+<ce>         ::= "ce" <id> <attributes>
+<de>         ::= "de" <id>
+<cg>         ::= "cg" <attributes>
+<st>         ::= "st" <real>
+<cl>         ::= "cl"
+<attributes> ::= ( <attribute> )*
+<attribute>  ::= ( "+" | "-" )? <id> ( <assign> <value> ( "," <value> )* )?
+<value>      ::= <string> | <real> | "" | <array> | <map>
+<array>      ::= "{" ( <value> ( "," <value> )* )? "}"
+<map>        ::= "[" ( <mapping> ( "," <mapping> )* )? "]"
+<mapping>    ::= <id> <assign> <value>
+<direction>  ::= '<' | '>' | ''
+<assign>     ::= '=' | ':'
+<id>         ::= <string> | <int> | <word> ( '.' <word> )*
+
+<comment>    ::= "#" ( . )* <EOL>
+<int>        ::= '0' | ( '1' .. '9' ) ( '0' .. '9' )*
+<real>       ::= <int> ( "." ( "0" )* <int> )?
+<word>       ::= ( 'a' .. 'z' | 'A' .. 'Z' ) ( 'a' .. 'z' | 'A' .. 'Z' | '0' .. '9' | '-' | '_' )*
+<string>     ::= '"' ( [^'"'] | '\"' )* '"'
+
+*/
+
 (function(exports) {
-    'use strict';
+  'use strict';
 
-    if (exports.GS === undefined)
-        throw new Error('GS is not loaded');
+  if (exports.GS === undefined)
+    throw new Error('GS is not loaded');
 
-    exports.GS.Graph.prototype.dgs = function(url, callback) {
-        var dgs = new DGSParser(this);
+  var parser = {
+    lines: [],
+    line: '',
+    source:null
+  };
 
+  function FileSourceDGS() {
+    exports.GS.FileSource.call(this, 'DGS');
+    parser.source = this;
+  }
+  FileSourceDGS.prototype.begin = function(url) {
+    var that = this;
+    return new exports.Promise(
+      function(resolve, reject) {
         exports.jQuery.get(url).then(function(data) {
-            dgs.setData(data);
-            dgs.parse();
-            if (callback !== undefined) {
-                callback();
-            }
+          parser.setData(data);
+          resolve(that);
         }, function(err) {
-            throw new Error(err);
+          reject(err);
         });
-    };
+      });
+  };
 
-    function DGSParser(graph) {
-        this.graph = graph;
-        this.lines = [];
-        this.line = '';
+  FileSourceDGS.prototype.nextEvents = function() {
+    var result = parser.parseOneLine();
+    return result;
+    //return typeof result !== 'undefined' && result !== null && result !== '';
+  };
+
+  FileSourceDGS.prototype.nextStep = function() {
+    var stepRead = false;
+    while(parser.ready() && parser.parseOneLine() !== 'st') {
+      stepRead = true;
+    }
+    return stepRead;
+  };
+
+  FileSourceDGS.prototype.readAll = function() {
+    parser.parseAll();
+  };
+
+  FileSourceDGS.prototype.end = function() {
+    // nope
+  };
+
+  exports.GS.extend(exports.GS.FileSource.prototype, FileSourceDGS.prototype);
+
+
+
+  parser.setData = function(data) {
+    var re, line;
+    parser.lines = data.split('\n').reverse();
+
+    line = parser.lines.pop();
+    re = /^DGS00\d$/;
+    if (!re.test(line))
+      throw new Error('invalid dgs header "' + line + '"');
+
+    line = parser.lines.pop();
+    re = /^\S+ \d+ \d+$/;
+    if (!re.test(line))
+      throw new Error('invalid dgs header "' + line + '"');
+
+    var i = 0;
+
+    while (i < parser.lines.length) {
+      if (parser.lines[i] === '' || parser.lines[i].charAt(0) === '#') {
+        parser.lines.splice(i, 1);
+      } else i++;
+    }
+  };
+
+
+
+  // exports.GS.Graph.prototype.dgs = function(url, callback) {
+  //     var dgs = new DGSParser(this);
+  //
+  //     exports.jQuery.get(url).then(function(data) {
+  //         dgs.setData(data);
+  //         dgs.parse();
+  //         if (callback !== undefined) {
+  //             callback();
+  //         }
+  //     }, function(err) {
+  //         throw new Error(err);
+  //     });
+  // };
+
+
+
+  parser.setData = function(data) {
+    var re, line;
+    parser.lines = data.split('\n').reverse();
+
+    line = parser.lines.pop();
+    re = /^DGS00\d$/;
+    if (!re.test(line))
+      throw new Error('invalid dgs header "' + line + '"');
+
+    line = parser.lines.pop();
+    re = /^\S+ \d+ \d+$/;
+    if (!re.test(line))
+      throw new Error('invalid dgs header "' + line + '"');
+
+    var i = 0;
+
+    while (i < parser.lines.length) {
+      if (parser.lines[i] === '' || parser.lines[i].charAt(0) === '#') {
+        parser.lines.splice(i, 1);
+      } else i++;
+    }
+  };
+
+  parser.ready = function() {
+    return (parser.lines.length > 0);
+  };
+
+  parser.next = function() {
+    parser.line = parser.lines.pop();
+    return this;
+  };
+
+  parser.dir = function() {
+    if (parser.line.match(/^\s*#/) !== null) {
+      return '#';
+    }
+    var dir = parser.line.substr(0, 2).toLowerCase();
+    parser.line = parser.line.substr(3, parser.line.length - 3);
+    return dir;
+  };
+
+  parser.parseOneLine = function() {
+    var dir,
+      id,
+      source,
+      target,
+      directed;
+    parser.next();
+
+    dir = parser.dir();
+
+    //
+    // Execute directive
+    //
+    switch (dir) {
+      case 'an':
+        id = parser.nextId();
+        parser.source.sendNodeAdded(id);
+        parser.parseAttributes('node', id);
+        break;
+      case 'cn':
+        id = parser.nextId();
+        parser.parseAttributes('node', id); // was parser.graph.sn(id)
+        break;
+      case 'dn':
+        id = parser.nextId();
+        parser.source.sendNodeRemoved(id);
+        break;
+      case 'ae':
+        id = parser.nextId();
+        source = parser.nextId();
+        directed = parser.isDirectedEdge();
+        target = parser.nextId();
+        parser.source.sendEdgeAdded(id, source, target, directed);
+        parser.parseAttributes('edge', id);
+        break;
+      case 'ce':
+        id = parser.nextId();
+        parser.parseAttributes('edge', id); // was parser.graph.se(id)
+        break;
+      case 'de':
+        id = parser.nextId();
+        parser.source.sendEdgeRemoved(id);
+        //parser.parseAttributes('edge', id);
+        break;
+      case 'cg':
+        id = parser.nextId();
+        parser.parseAttributes('graph');
+        break;
+      case 'st':
+        parser.source.sendStepBegins(parser.nextReal());
+        break;
+      case 'cl':
+        parser.source.sendGraphCleared.cl();
+        break;
+      case '#':
+        break;
+      default:
+        throw new Error('DSG Parser unknown directive "' + dir + '"');
+    }
+    return dir;
+  };
+  parser.parseAll = function() {
+
+    while (parser.ready()) {
+      parser.parseOneLine();
+    }
+  };
+
+  parser.nextId = function() {
+    var re = /^\s*(?:'([^']+)'|"([^"]+)"|([\w\d-_]+))(?:(.*))?$/;
+    var ex = re.exec(parser.line);
+    if (ex === null) {
+      throw new Error('DSG Parser Problem with ids reading that line :' +
+        parser.line);
+    } else {
+      parser.line = ex[4];
+      return ex[1] || ex[2] || ex[3];
+    }
+  };
+
+  parser.isDirectedEdge = function() {
+    var re = /^\s*(>)(?:(.*))?$/;
+    var ex = re.exec(parser.line);
+    if (ex === null) {
+      return false;
     }
 
-    DGSParser.prototype.setData = function(data) {
-        var re, line;
-        this.lines = data.split('\n').reverse();
+    if (ex[1] !== undefined && ex[1] === '>') {
+      parser.line = ex[2];
+      return true;
+    } else
+      return false;
+  };
 
-        line = this.lines.pop();
-        re = /^DGS00\d$/;
-        if (!re.test(line))
-            throw new Error('invalid dgs header "' + line + '"');
+  parser.nextReal = function() {
+    var re = /^(\d+(?:\.\d+)?)$/;
+    var ex = re.exec(parser.line);
 
-        line = this.lines.pop();
-        re = /^\S+ \d+ \d+$/;
-        if (!re.test(line))
-            throw new Error('invalid dgs header "' + line + '"');
+    return ex[1];
+  };
 
-        var i = 0;
+  parser.parseAttributes = function(type, e) {
+    var that = this;
 
-        while (i < this.lines.length) {
-            if (this.lines[i] === '' || this.lines[i].charAt(0) === '#') {
-                this.lines.splice(i, 1);
-            } else i++;
-        }
-    };
+    function readValue(isArray) {
+      var re,
+        ex,
+        in_re,
+        in_ex,
+        o = [],
+        map,
+        nextChar;
 
-    DGSParser.prototype.ready = function() {
-        return (this.lines.length > 0);
-    };
+      if (ex === null) {
+        throw new Error('No value could be read on line: ' + that.line);
+      }
 
-    DGSParser.prototype.next = function() {
-        this.line = this.lines.pop();
-        return this;
-    };
+      do {
+        re = /^\s*(([^\s])(.*))/;
+        ex = re.exec(that.line);
+        // ex[1] is the all value
+        // ex[2] is the first char
+        // ex[3] is the rest
 
-    DGSParser.prototype.dir = function() {
-        var dir = this.line.substr(0, 2).toLowerCase();
-        this.line = this.line.substr(3, this.line.length - 3);
-        return dir;
-    };
-
-    DGSParser.prototype.parse = function() {
-        var dir,
-            id,
-            source,
-            target,
-            directed;
-
-        while (this.ready()) {
-            this.next();
-
-            dir = this.dir();
-
-            //
-            // Execute directive
-            //
-            switch (dir) {
-                case 'an':
-                    id = this.nextId();
-
-                    this.graph.an(id);
-                    this.parseAttributes('node', id);
-                    break;
-                case 'cn':
-                    id = this.nextId();
-                    this.parseAttributes('node', this.graph.sn(id));
-                    break;
-                case 'dn':
-                    id = this.nextId();
-                    this.graph.dn(id);
-                    break;
-                case 'ae':
-                    id = this.nextId();
-                    source = this.nextId();
-                    directed = this.isDirectedEdge();
-                    target = this.nextId();
-
-                    this.graph.ae(id, source, target);
-                    break;
-                case 'ce':
-                    id = this.nextId();
-
-                    this.parseAttributes('edge', this.graph.se(id));
-                    break;
-                case 'de':
-                    id = this.nextId();
-                    this.graph.de(id);
-                    //this.parseAttributes('edge', id);
-                    break;
-                case 'cg':
-                    break;
-                case 'st':
-                    this.graph.st(this.nextReal());
-                    break;
-                case 'cl':
-                    this.graph.cl();
-                    break;
-                default:
-                    throw new Error('unknown directive "' + dir + '"');
+        switch (ex[2]) {
+          case '\'':
+          case '"':
+            in_re = /^([^'^"]*)['"](.*)$/;
+            in_ex = in_re.exec(ex[3]); // exec on the rest (no starting quote)
+            if (in_ex === null) {
+              throw new Error('Could not read a string on line: ' + that.line);
             }
+            o.push(in_ex[1]);
+            that.line = in_ex[2];
+            break;
+          case '#':
+            in_re = /^(#[a-fA-F0-9]{6}|[a-fA-F0-9]{3})(.*)/;
+            in_ex = in_re.exec(ex[1]); // exec on the rest (no starting #)
+            if (in_ex === null) {
+              throw new Error('Could not read a color on line: ' + that.line);
+            }
+            o.push(in_ex[1]);
+            that.line = in_ex[2];
+            break;
+          case '{': // an array
+            that.line = ex[3];
+            var arr = readValue(true);
+            in_re = /^\s*((\})(.*))/;
+            in_ex = in_re.exec(that.line);
+            if (in_ex === null) {
+              throw new Error('Could not read a table on line: ' + that.line);
+            }
+            o.push(arr);
+
+            that.line = in_ex[3];
+            break;
+          case '[': // a map
+            map = {};
+            in_re = /^\s*([^\s])/;
+            in_ex = in_re.exec(ex[3]);
+            that.line = ex[3];
+            nextChar = in_ex[1];
+            while (nextChar !== ']') {
+              in_re = /^\s*(?:"([^"]*)"|'([^']*)'|(\w[[\w.]*))\s*[:=](.*)$/;
+              in_ex = in_re.exec(that.line);
+              if (in_ex === null) {
+                throw new Error('Could not read a hash on line: ' + that.line);
+              }
+              var key = in_ex[1] || in_ex[2] || in_ex[3];
+              that.line = in_ex[4];
+              var value = readValue(false);
+              map[key] = value;
+
+              in_re = /^\s*(([^\s])(.*))/;
+              in_ex = in_re.exec(that.line);
+
+              // in_ex[1] is the all value
+              // in_ex[2] is the first char
+              // in_ex[3] is the rest
+              nextChar = in_ex[2];
+              if (nextChar !== ']' && nextChar !== ',') {
+                throw new Error('Could not read a hash on line: ' + that.line);
+              }
+              that.line = in_ex[3];
+            }
+            o.push(map);
+            break;
+
+          default: // word or number
+            in_re =
+              /\s*(?:([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)|(\w[-\w.]*)|"([^"]*)"|'([^']*)')(.*)$/;
+            in_ex = in_re.exec(ex[1]);
+            if (in_ex === null) {
+              throw new Error('Could not read a word or number on line: ' +
+                that.line);
+            }
+            var tmp = ((typeof(in_ex[1]) !== 'undefined') ? parseFloat(in_ex[
+              1], 10) : in_ex[2] || in_ex[3] || in_ex[4]);
+
+            o.push(tmp);
+            that.line = in_ex[5];
         }
-    };
 
-    DGSParser.prototype.nextId = function() {
-        var re = /^\s*(?:'([^']+)'|"([^"]+)"|([\w\d-_]+))(?:(.*))?$/;
-        var ex = re.exec(this.line);
-        var i = 0;
-        if (ex[++i] !== undefined || ex[++i] !== undefined || ex[++i] !== undefined) {
-            this.line = ex[4];
-            return ex[i];
-        } else return undefined;
-    };
-
-    DGSParser.prototype.isDirectedEdge = function() {
-        var re = /^\s*(>)(?:(.*))?$/;
-        var ex = re.exec(this.line);
+        re = /^\s*(([^\s]|)(.*))/;
+        ex = re.exec(that.line);
+        // ex[1] is the all value
+        // ex[2] is the first char
+        // ex[3] is the rest
         if (ex === null) {
-            return false;
+          throw new Error('No value could be read on line: ' + that.line);
         }
-
-        if (ex[1] !== undefined && ex[1] === '>') {
-            this.line = ex[2];
-            return true;
-        } else return false;
-    };
-
-    DGSParser.prototype.nextReal = function() {
-        var re = /^(\d+(?:\.\d+)?)$/;
-        var ex = re.exec(this.line);
-
-        return ex[1];
-    };
-
-    DGSParser.prototype.parseAttributes = function(type, e, attributes) {
-        var re = /[+-]?("[^"]*"|'[^']*'|\w[[\w.]*)([:=](\d+([.]\d+)?|\w[[\w.]*|"[^"]*"|'[^']*'|#[a-fA-F0-9]{6}))?/g;
-        switch (type) {
-            case 'node':
-                break;
-            case 'edge':
-                break;
+        if (ex[2] === ',' && isArray) {
+          that.line = ex[3];
         }
-    };
+      } while (ex[2] === ',' && isArray);
+
+      if (o.length === 1) {
+        return o[0];
+      }
+      return o;
+    } // end readValue.
+
+
+    if (typeof parser.line === 'undefined' || parser.line.match(/^\s*$/) !==
+      null) {
+      // exports.console.log('No attributes for ' + type + ' ' + e + '. Moving on.');
+      return;
+    }
+    var re = /^\s*([+-]?)(?:"([^"]*)"|'([^']*)'|(\w[[\w.]*))(.*?)$/;
+    var ex = re.exec(parser.line);
+    var isRemove,
+      attrName,
+      attrVal;
+
+    if (ex === null) {
+      // exports.console.log('No attributes for ' + type + ' ' + e + '. Moving on.');
+      return;
+    }
+    // exports.console.log(ex);
+    isRemove = ex[1] === '-' ? true : false;
+
+    // Get attribute name and value. No quotes.
+    attrName = ex[2] || ex[3] || ex[4];
+
+    // go on with the rest.
+    parser.line = ex[5];
+
+    re = /\s*([:=])?(.*?)$/;
+    ex = re.exec(parser.line);
+    // exports.console.log(ex);
+
+    if (typeof(ex[1]) !== 'undefined') {
+      // we have a value.
+      parser.line = ex[2];
+
+      attrVal = readValue(true);
+
+    }
+
+    // exports.console.log('attrName: ' + attrName);
+    // exports.console.log('attrVal: ' + attrVal);
+
+    if (isRemove) {
+      switch (type) {
+        case 'node':
+          parser.source.sendNodeAttributeRemoved(e,attrName);
+          break;
+        case 'edge':
+          parser.source.sendEdgeAttributeRemoved(e,attrName);
+          break;
+        case 'graph':
+          parser.source.sendGraphAttributeRemoved(attrName);
+
+      }
+    } else {
+      switch (type) {
+        case 'node':
+          parser.source.sendNodeAttributeAdded(e,attrName, attrVal);
+          break;
+        case 'edge':
+          parser.source.sendEdgeAttributeAdded(e,attrName, attrVal);
+          break;
+        case 'graph':
+          parser.source.sendGraphAttributeAdded(attrName, attrVal);
+          break;
+      }
+    }
+
+    // maybe there are some extra attributes. Let's call the method recursively.
+    if (parser.line !== '') {
+      parser.parseAttributes(type, e);
+    }
+  };
+
+
+  exports.GS.FileSourceDGS = FileSourceDGS;
+
 })(window);
 
 (function(exports) {
@@ -2179,147 +2538,168 @@
     if (exports.GS === undefined)
         throw new Error('GS is not loaded');
 
-    var DEFAULT_NODE_VERTEX_SHADER = [
-        'attribute vec2 aVertexPos;',
-        'attribute vec2 aCustomAttributes;',
-        'uniform vec2 uScreenSize;',
-        'uniform mat4 uTransform;',
-        'varying vec4 color;',
-        'void main(void) {',
-        '   gl_Position = uTransform * vec4(aVertexPos/uScreenSize, 0, 1);',
-        '   gl_PointSize = aCustomAttributes[1] * uTransform[0][0];',
-        '   float c = aCustomAttributes[0];',
-        '   color = vec4(0.0, 0.0, 0.0, 255.0);',
-        '   color.b = mod(c, 256.0); c = floor(c/256.0);',
-        '   color.g = mod(c, 256.0); c = floor(c/256.0);',
-        '   color.r = mod(c, 256.0); c = floor(c/256.0); color /= 255.0;',
-        '}'
-    ].join('\n');
+    // Node
 
-    var DEFAULT_NODE_FRAGMENT_SHADER = [
-        'precision mediump float;',
-        'varying vec4 color;',
-        'void main(void) {',
-        '   gl_FragColor = color;',
-        '}'
-    ].join('\n');
-
-    var DEFAULT_EDGE_VERTEX_SHADER = [
-
-    ].join('\n');
-
-    var DEFAULT_EDGE_FRAGMENT_SHADER = [
-
-    ].join('\n');
-
-    function WebGLNode(graph, id) {
+    function WEBGLNode(graph, id) {
         exports.GS.Node.call(this, graph, id);
+
+        this.shape = new THREE.Mesh(new THREE.SphereGeometry(graph.default_node_size_3d, 16, 16),
+                                    new THREE.MeshLambertMaterial());
+
+        /*
+        // Node as Cube instead of Sphere.
+        this.shape = new THREE.Mesh(new THREE.BoxGeometry(graph.default_node_size_3d, graph.default_node_size_3d, graph.default_node_size_3d),
+                                    new THREE.MeshLambertMaterial());
+        */
+
+        graph.context.wnodes(this.shape);
     }
 
-    WebGLNode.prototype = {
-        updateShapePosition: function() {
-            this.graph.context.vertices[this.index * 2 + 0] = this.pixelX;
-            this.graph.context.vertices[this.index * 2 + 1] = this.pixelY;
-
-            this.graph.context.updateVertex();
-        }
-    };
-
-    function initGL(canvas) {
-        var gl;
-
-        try {
-            gl = canvas.getContext('experimental-webgl');
-            gl.viewportWidth = canvas.width;
-            gl.viewportHeight = canvas.height;
-        } catch (e) {
-            exports.console.log('can not initialize webgl');
-        }
-
-        return gl;
-    }
-
-    function NodeShader(vertexShader, fragmentShader) {
-        if (vertexShader === undefined)
-            vertexShader = DEFAULT_NODE_VERTEX_SHADER;
-
-        if (fragmentShader === undefined)
-            fragmentShader = DEFAULT_NODE_FRAGMENT_SHADER;
-
-        this.vertexShaderCode = vertexShader;
-        this.fragmentShaderCode = fragmentShader;
-    }
-
-    NodeShader.prototype = {
-        init: function(gl, program) {
-
+    WEBGLNode.prototype = {
+        setFill: function(color) {
+            this.shape.material.color = new THREE.Color(color);
         },
 
-        activate: function(gl, program) {
+        setStroke: function(color) {
+            this.setFill(color);
+        },
 
+        setStrokeWidth: function(size) {
+            this.setSize(size);
+        },
+
+        setSize: function(size) {
+            var ratio = size / graph.default_node_size_3d;
+            this.shape.scale.set(ratio, ratio, ratio);
+        },
+
+        updateShapePosition: function() {
+            this.shape.position.set(this._x, this._y, this._z);
         }
     };
 
-    function EdgeShader(vertexShader, fragmentShader) {}
+    // Edge
 
-    EdgeShader.prototype = {
+    function WEBGLEdge(graph, id, source, target, directed) {
+        exports.GS.Edge.call(this, graph, id, source, target, directed);
 
-    };
+        var edgeGeometry = new THREE.Geometry();
 
-    function WebGLContext(sel) {
-        exports.GS.Context.call(this, sel);
+        edgeGeometry.vertices.push(source.shape.position);
+        edgeGeometry.vertices.push(target.shape.position);
 
-        this.canvas = document.createElement('canvas');
-        this.gl = initGL(this.canvas);
+        this.shape = new THREE.Line(edgeGeometry, new THREE.LineBasicMaterial({ vertexColors: true }));
 
-        if (!this.gl)
-            throw new Error('no webgl support');
-
-        this.vertexBuffer = this.gl.createBuffer();
-        this.edgesBuffer = this.gl.createBuffer();
-
-        this.vertices = [];
-
-        this.nodeShader = new NodeShader();
-        this.edgeShader = new EdgeShader();
+        graph.context.wedges(this.shape);
     }
 
-    WebGLContext.prototype = {
+    WEBGLEdge.prototype = {
+        setStroke: function(color) {
+            this.shape.geometry.colors[0] = new THREE.Color(color);
+            this.shape.geometry.colors[1] = new THREE.Color(color);
+            this.shape.geometry.colorsNeedUpdate = true;
+        },
+
+        setStrokeWidth: function(size) {
+            this.shape.material.linewidth = size;
+        },
+
+        setSize: function(size) {
+            this.setStrokeWidth(size);
+        },
+
+        updateShapePosition: function() {
+        }
+    };
+
+    exports.GS.extend(exports.GS.Node.prototype, WEBGLNode.prototype);
+    exports.GS.extend(exports.GS.Edge.prototype, WEBGLEdge.prototype);
+
+    // Context
+
+    function WEBGLContext(selector) {
+        GS.Context.call(this, selector);
+
+        this.webgl = document.getElementById('three');
+        var that = this;
+
+        function run() {
+            requestAnimationFrame(run);
+            renderer.render(that.scene, camera);
+            controls.update();
+        }
+
+        var view_width  = this.webgl.offsetWidth,
+            view_height = this.webgl.offsetHeight;
+
+        this.scene = new THREE.Scene();
+        var renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(view_width, view_height);
+
+        // Add a camera.
+        // TODO: Place it according to graph content.
+        var camera = new THREE.PerspectiveCamera(50, view_width / view_height, 1, 4000);
+        camera.position.set(-25, -125, 300);
+        camera.up.set(0, 0, 1);
+        this.scene.add(camera);
+
+        // Lights.
+        var amb_light = new THREE.AmbientLight(0x555555);
+        var dir_light = new THREE.DirectionalLight(0x888888, 1.5);
+        dir_light.position.set(-10, -50, 100);
+        this.scene.add(amb_light);
+        this.scene.add(dir_light);
+
+        /* Mouse controls. */
+        // Left click + move: rotate
+        // Mouse wheel / middle click + move: zoom in/out
+        // Right click + move: pan
+        var controls = new THREE.TrackballControls(camera);
+        controls.rotateSpeed = 1.5;
+        controls.zoomSpeed = 10;
+        controls.panSpeed = 1.5;
+        controls.noZoom = false;
+        controls.noPan = false;
+        controls.staticMoving = true;
+        controls.dynamicDampingFactor = 0.3;
+
+        this.webgl.appendChild(renderer.domElement);
+
+        run();
+    }
+
+    WEBGLContext.prototype = {
+        wnodes: function (node) {
+            this.scene.add(node);
+        },
+
         createNode: function(graph, nodeId) {
-            var n = new WebGLNode(graph, nodeId);
+            var n = new WEBGLNode(graph, nodeId);
             return n;
         },
 
-        removeNode: function(graph, node) {},
-
-        createEdge: function(graph, edgeId, source, target, directed) {
-            return new exports.GS.Edge(graph, edgeId, source, target, directed);
+        removeNode: function(graph, node) {
+            this.scene.remove(node.shape);
         },
 
-        removeEdge: function(graph, edge) {},
+        wedges: function (edge) {
+            this.scene.add(edge);
+        },
+
+        createEdge: function(graph, edgeId, source, target, directed) {
+            var e = new WEBGLEdge(graph, edgeId, source, target, directed);
+            return e;
+        },
+
+        removeEdge: function(graph, edge) {
+            this.scene.remove(edge.shape);
+        },
 
         clear: function(graph) {},
 
-        zoom: function(factor) {},
-
-        nodeIndexChanged: function(node, oldIndex, newIndex) {
-            this.vertices[newIndex * 2 + 0] = this.vertices[oldIndex * 2 + 0];
-            this.vertices[newIndex * 2 + 1] = this.vertices[oldIndex * 2 + 1];
-        },
-
-        edgeIndexChanged: function(edge, oldIndex, newIndex) {},
-
-        updateVertex: function() {
-            var gl = this.gl;
-
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.vertices), gl.STATIC_DRAW);
-
-            this.vertexBuffer.itemSize = 2;
-            this.vertexBuffer.numItems = this.vertices.length / 2;
-        }
+        zoom: function(factor) {}
     };
 
-    exports.GS.extend(exports.GS.Context.prototype, WebGLContext.prototype);
-
-}(this));
+    exports.GS.extend(GS.Context.prototype, WEBGLContext.prototype);
+    exports.GS.registerContext("webgl", WEBGLContext);
+} (this));
