@@ -1,7 +1,13 @@
-/*! w3sink v0.0.1 - 2014-05-26 
+/*! w3sink v0.0.1 - 2014-09-26 
  *  License: MIT */
 (function(exports) {
   'use strict';
+
+  /*
+   * This object will contains the CSS structure for the whole graph.
+   */
+  var CSS_structure = new CSS_tree();
+
 
   /**
    * Extends a class.
@@ -244,16 +250,17 @@
     /**
      * Send a graphAttributeAdded event.
      *
-     * @param attrid
+     * @param attr
      *          key of the attribute
      * @param value
      *          value of the attribute
      */
-    sendGraphAttributeAdded: function(attrId, value) {
+    sendGraphAttributeAdded: function(attr, value) {
       var t = this.newTimeId();
 
-      for (var i = 0; i < this.sinks.length; i++)
-        this.sinks[i].graphAttributeAdded(this.id, t, attrId);
+      for (var i = 0; i < this.sinks.length; i++) {
+        this.sinks[i].graphAttributeAdded(this.id, t, attr, value);
+      }
     },
 
     /**
@@ -618,7 +625,13 @@
 
     setSize: function(size) {},
 
+    setShape: function(shape) {},
+
     setLabel: function(label) {},
+
+    setHide: function(is_visible) {},
+
+    setClass: function(ui_class) {},
 
     setStyle: function(style) {
       var styles = style.split(/\s*;\s*/),
@@ -651,6 +664,9 @@
             break;
           case 'size':
             this.setSize(getSize(this, t[1]));
+            break;
+          case 'shape':
+            this.setShape(t[1]);
             break;
           case 'fill-image':
           case 'fill-mode':
@@ -800,7 +816,7 @@
       this.points[this.points.length - 1].x = this.target.pixelX;
       this.points[this.points.length - 1].y = this.target.pixelY;
 
-      // Update 3D edges.
+      // Update 3D edges (to keep on with their nodes' movements).
       this.shape.geometry.verticesNeedUpdate = true;
 
       this.updateShapePosition();
@@ -830,19 +846,13 @@
     this.indexedNodes = [];
     this.indexedEdges = [];
 
-    this.default_node_style =
-      'fill-color:#89a9e3;size:10px;stroke-color:#333333;stroke-width:5px;';
-    this.default_node_size = 15;
-    this.default_edge_style = 'stroke-color:#333333;stroke-width:2px;';
-
-    // 3D default size. Probably not very useful...
-    this.default_node_size_3d = 7;
+    // Default style for 3D objects.
+    this.default_node_style = 'size:5; fill-color:#555;';
+    this.default_edge_style = 'stroke-width:2; stroke-color:#999;';
 
     this.viewbox = new ViewBox(this);
     this.dispatch = new Sink();
 
-    //this._width = jQuery(this.context.getCanvas()).width();
-    //this._height = jQuery(this.context.getCanvas()).height();
     this._width = exports.jQuery(this.context.getContainer()).width();
     this._height = exports.jQuery(this.context.getContainer()).height();
   }
@@ -858,13 +868,14 @@
 
     an: function(id) {
       if (this.nodes.hasOwnProperty(id)) {
-        exports.console.log('[warning] node exists "' + id + '"');
+        exports.console.log('[Warning] node exists "' + id + '"');
         return;
       }
 
       var n = this.context.createNode(this, id);
       this.nodes[id] = n;
       this.nodesCount++;
+
       n.setStyle(this.default_node_style);
 
       this.sendNodeAdded(id);
@@ -900,12 +911,32 @@
           }
           n.setXYZ(x, y, z);
         }
+        else if (key === 'style') {
+          n.setStyle(value);
+
+          // Put that style in CSS_structure object.
+          var style_obj = style_to_obj('node', n.id, value);
+          update_CSS(CSS_structure, style_obj);
+        }
         else if (key === 'size')
           n.setSize(value);
-        else if (key === 'style')
-          n.setStyle(value);
         else if (key === 'label')
           n.setLabel(value);
+        else if (key === 'ui.class') {
+          n.setClass(value);
+
+          // Refresh that node according to 'value' class parameters.
+          read_css_for_obj(CSS_structure, 'node', n.id);
+        }
+        else if (key === 'ui.hide') {
+          // ui.hide attribute is probably not present when object is visible...
+          var visible;
+          if (value === 'true')
+              visible = false;
+          else
+              visible = true;
+          n.setHide(visible);
+        }
         else
           n.setAttribute(key, value);
         this.sendNodeAttributeChanged(id, key, value);
@@ -970,8 +1001,7 @@
         return;
       }
 
-      var e = this.context.createEdge(this, id, this.nodes[src], this.nodes[
-        trg], directed);
+      var e = this.context.createEdge(this, id, this.nodes[src], this.nodes[trg], directed);
       this.edges[id] = e;
 
       e.setStyle(this.default_edge_style);
@@ -990,10 +1020,33 @@
         e.removeAttribute(e);
         this.sendEdgeAttributeRemoved(id, key);
       } else {
-        if (key === 'style')
+        if (key === 'style') {
           e.setStyle(value);
-        else if (key === 'size')
+
+          // Put that style in CSS_structure object.
+          var style_obj = style_to_obj('edge', e.id, value);
+          update_CSS(CSS_structure, style_obj);
+        }
+        else if (key === 'size') {
           e.setSize(value);
+        }
+        else if (key === 'label')
+          e.setLabel(value);
+        else if (key === 'ui.class') {
+          e.setClass(value);
+
+          // Refresh that node according to 'value' class parameters.
+          read_css_for_obj(CSS_structure, 'edge', e.id);
+        }
+        else if (key === 'ui.hide') {
+          // ui.hide attribute is probably not present when object is visible...
+          var visible;
+          if (value === 'true')
+              visible = false;
+          else
+              visible = true;
+          e.setHide(visible);
+        }
         else
           e.setAttribute(key, value);
         this.sendEdgeAttributeChanged(id, key, value);
@@ -1030,11 +1083,9 @@
 
       delete this.edges[id];
       this.edgesCount--;
-
     },
 
-    cg: function(k, v) {
-
+    cg: function(key, value) {
     },
 
     cl: function() {
@@ -1103,6 +1154,26 @@
     },
 
     graphAttributeAdded: function(sourceId, timeId, key, value) {
+      // Get stylesheet content, convert it into a CSS_tree object and add it to CSS_structure.
+
+      // If stylesheet is from a file.
+      if (value.substring(0, 3) === 'url') {
+
+        // Get file content.
+        var url = value.substring(5, value.length - 2);
+
+        // Put its content into CSS_structure and apply that content to the whole graph.
+        handle_css_content(url, CSS_structure);
+      }
+      // If stylesheet is from a string.
+      else {
+        var object_css = data_to_obj(value);
+        var is_different = update_CSS(CSS_structure, object_css);
+        if (is_different) {
+          read_css(CSS_structure);
+        }
+      }
+
       this.cg(key, value);
     },
 
@@ -1965,23 +2036,31 @@ The GDS Grammar:
     exports.GS.FileSource.call(this, 'DGS');
     parser.source = this;
   }
-  FileSourceDGS.prototype.begin = function(url) {
+
+  // If urlOrData is a dgs file *content*, isData needs to be true.
+  // If urlOrData is a dgs file, isData needs to be false.
+  FileSourceDGS.prototype.begin = function(urlOrData, isData) {
     var that = this;
     return new exports.Promise(
       function(resolve, reject) {
-        exports.jQuery.get(url).then(function(data) {
+        var callback = function(data) {
           parser.setData(data);
           resolve(that);
-        }, function(err) {
-          reject(err);
-        });
+        };
+
+        if (isData) {
+          callback(urlOrData);
+        } else {
+          exports.jQuery.get(urlOrData).then(callback, function(err) {
+            reject(err);
+          });
+        }
       });
   };
 
   FileSourceDGS.prototype.nextEvents = function() {
     var result = parser.parseOneLine();
     return result;
-    //return typeof result !== 'undefined' && result !== null && result !== '';
   };
 
   FileSourceDGS.prototype.nextStep = function() {
@@ -2027,8 +2106,6 @@ The GDS Grammar:
     }
   };
 
-
-
   // exports.GS.Graph.prototype.dgs = function(url, callback) {
   //     var dgs = new DGSParser(this);
   //
@@ -2042,8 +2119,6 @@ The GDS Grammar:
   //         throw new Error(err);
   //     });
   // };
-
-
 
   parser.setData = function(data) {
     var re, line;
@@ -2128,11 +2203,10 @@ The GDS Grammar:
       case 'de':
         id = parser.nextId();
         parser.source.sendEdgeRemoved(id);
-        //parser.parseAttributes('edge', id);
         break;
       case 'cg':
         id = parser.nextId();
-        parser.parseAttributes('graph');
+        parser.parseAttributes('graph', id);    // was parser.parseAttributes('graph');
         break;
       case 'st':
         parser.source.sendStepBegins(parser.nextReal());
@@ -2147,8 +2221,8 @@ The GDS Grammar:
     }
     return dir;
   };
-  parser.parseAll = function() {
 
+  parser.parseAll = function() {
     while (parser.ready()) {
       parser.parseOneLine();
     }
@@ -2162,6 +2236,7 @@ The GDS Grammar:
         parser.line);
     } else {
       parser.line = ex[4];
+
       return ex[1] || ex[2] || ex[3];
     }
   };
@@ -2289,14 +2364,26 @@ The GDS Grammar:
             that.line = in_ex[5];
         }
 
+
+        // If it is a graph attribute, directly return ex[3].
+        // -> Because, as opposed to node and line commands, graph command lines have no ID,
+        //    which would be a problem in the next part.
+        if (type === 'graph') {
+            // Remove last character, which is a closing quote.
+            return ex[3].substring(0, ex[3].length - 1);
+        }
+
+
         re = /^\s*(([^\s]|)(.*))/;
         ex = re.exec(that.line);
         // ex[1] is the all value
         // ex[2] is the first char
         // ex[3] is the rest
+
         if (ex === null) {
           throw new Error('No value could be read on line: ' + that.line);
         }
+
         if (ex[2] === ',' && isArray) {
           that.line = ex[3];
         }
@@ -2314,14 +2401,29 @@ The GDS Grammar:
       // exports.console.log('No attributes for ' + type + ' ' + e + '. Moving on.');
       return;
     }
+
     var re = /^\s*([+-]?)(?:"([^"]*)"|'([^']*)'|(\w[[\w.]*))(.*?)$/;
+
     var ex = re.exec(parser.line);
     var isRemove,
       attrName,
       attrVal;
 
+    //////////////////
+    // Ugly hack... //
+    //////////////////
+    // If cg ui.stylesheet:'...', then parser.line is .stylesheet:'...'
+    if (parser.line.charAt(0) === '.') {
+        ex = re.exec('ui' + parser.line);
+    }
+    // If "cg ui.stylesheet":"...", then parser.line is :"..."
+    if (parser.line.charAt(0) === ':') {
+        ex = re.exec('ui.stylesheet' + parser.line);
+    }
+
+
     if (ex === null) {
-      // exports.console.log('No attributes for ' + type + ' ' + e + '. Moving on.');
+      //exports.console.log('No attributes for ' + type + ' ' + e + '. Moving on.');
       return;
     }
     // exports.console.log(ex);
@@ -2342,7 +2444,6 @@ The GDS Grammar:
       parser.line = ex[2];
 
       attrVal = readValue(true);
-
     }
 
     // exports.console.log('attrName: ' + attrName);
@@ -2363,10 +2464,10 @@ The GDS Grammar:
     } else {
       switch (type) {
         case 'node':
-          parser.source.sendNodeAttributeAdded(e,attrName, attrVal);
+          parser.source.sendNodeAttributeAdded(e, attrName, attrVal);
           break;
         case 'edge':
-          parser.source.sendEdgeAttributeAdded(e,attrName, attrVal);
+          parser.source.sendEdgeAttributeAdded(e, attrName, attrVal);
           break;
         case 'graph':
           parser.source.sendGraphAttributeAdded(attrName, attrVal);
@@ -2374,12 +2475,14 @@ The GDS Grammar:
       }
     }
 
-    // maybe there are some extra attributes. Let's call the method recursively.
-    if (parser.line !== '') {
+    // Maybe there are some extra attributes. Let's call the method recursively.
+
+    // If there is a ')' in parser.line, ignore that. (ui.stylesheet stuff...)
+    // TODO: Find a better way of dealing with that (regex?).
+    if (parser.line !== '' && !parser.line.contains(')')) {
       parser.parseAttributes(type, e);
     }
   };
-
 
   exports.GS.FileSourceDGS = FileSourceDGS;
 
@@ -2538,19 +2641,27 @@ The GDS Grammar:
     if (exports.GS === undefined)
         throw new Error('GS is not loaded');
 
+    var list_labels = [];
+    var list_objects = [];
+
+    var list_shapes = [new THREE.SphereGeometry(1, 16, 16),
+                       new THREE.BoxGeometry(1, 1, 1),
+                       new THREE.TetrahedronGeometry(1),
+                       new THREE.OctahedronGeometry(1),
+                       new THREE.TorusGeometry(1, 0.3, 8, 16)
+                      ];
+
     // Node
 
     function WEBGLNode(graph, id) {
         exports.GS.Node.call(this, graph, id);
 
-        this.shape = new THREE.Mesh(new THREE.SphereGeometry(graph.default_node_size_3d, 16, 16),
-                                    new THREE.MeshLambertMaterial());
+        // Default shape is a sphere.
+        var geometry = list_shapes[0];
+        this.shape = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial());
+        this.shape.type = 'Node';
 
-        /*
-        // Node as Cube instead of Sphere.
-        this.shape = new THREE.Mesh(new THREE.BoxGeometry(graph.default_node_size_3d, graph.default_node_size_3d, graph.default_node_size_3d),
-                                    new THREE.MeshLambertMaterial());
-        */
+        list_objects[this.shape.id] = this.shape;
 
         graph.context.wnodes(this.shape);
     }
@@ -2569,12 +2680,74 @@ The GDS Grammar:
         },
 
         setSize: function(size) {
-            var ratio = size / graph.default_node_size_3d;
-            this.shape.scale.set(ratio, ratio, ratio);
+            this.shape.scale.set(size, size, size);
+        },
+
+        setClass: function(ui_class) {
+            this.className = ui_class;
+        },
+
+        setHide: function(is_visible) {
+            this.shape.visible = is_visible;
+        },
+
+        setShape: function(shape) {
+            var id_shape = 0;
+            switch (shape) {
+                case 'cube':
+                    id_shape = 1;
+                    break;
+                case 'tetra':
+                    id_shape = 2;
+                    break;
+                case 'octa':
+                    id_shape = 3;
+                    break;
+                /*
+                // Problem for label, because center of torus is empty -> never visible
+                case 'torus':
+                    id_shape = 4;
+                    break;
+                */
+                default:
+                    // sphere or unknown shape.
+                    break;
+            }
+
+            this.shape_name = shape;
+
+            var geom = list_shapes[id_shape];
+            //this.shape.geometry.dispose();
+            this.shape.geometry = geom.clone();
+            this.shape.geometry.buffersNeedUpdate = true;
         },
 
         updateShapePosition: function() {
             this.shape.position.set(this._x, this._y, this._z);
+        },
+
+        setLabel: function(label) {
+            var position = this.shape.position;
+            var color = '#' + this.shape.material.color.getHexString();
+            var text = document.createElement('div');
+            text.style.position = 'absolute';
+            text.style.width = 100;
+            text.style.height = 100;
+            text.innerHTML = label;
+            //text.style.color = 'white';
+            text.style.backgroundColor = color;
+            text.style.left = position.x + 'px';
+            text.style.top = position.y + 'px';
+            text.style.display = 'none';
+            document.body.appendChild(text);
+
+            // Remove label if it exists.
+            if (list_labels[this.shape.id] !== undefined) {
+                list_labels[this.shape.id].style.display = 'none';
+                delete list_labels[this.shape.id];
+            }
+
+            list_labels[this.shape.id] = text;
         }
     };
 
@@ -2589,6 +2762,10 @@ The GDS Grammar:
         edgeGeometry.vertices.push(target.shape.position);
 
         this.shape = new THREE.Line(edgeGeometry, new THREE.LineBasicMaterial({ vertexColors: true }));
+        this.shape.type = 'Edge';
+        this.shape.geometry.computeBoundingSphere();
+
+        list_objects[this.shape.id] = this.shape;
 
         graph.context.wedges(this.shape);
     }
@@ -2608,7 +2785,41 @@ The GDS Grammar:
             this.setStrokeWidth(size);
         },
 
+        setClass: function(ui_class) {
+            this.className = ui_class;
+            //console.log('%c', 'color:red', 'Class for edge ' + this.id + ': ' + ui_class);
+        },
+
+        setHide: function(is_visible) {
+            this.shape.visible = is_visible;
+        },
+
         updateShapePosition: function() {
+            this.shape.geometry.computeBoundingSphere();
+        },
+
+        setLabel: function(label) {
+            var position = this.shape.geometry.boundingSphere.center;
+            var color = '#' + this.shape.geometry.colors[0].getHexString();
+            var text = document.createElement('div');
+            text.style.position = 'absolute';
+            text.style.width = 100;
+            text.style.height = 100;
+            text.innerHTML = label;
+            //text.style.color = color;
+            text.style.backgroundColor = color;
+            text.style.left = position.x + 'px';
+            text.style.top = position.y + 'px';
+            text.style.display = 'none';
+            document.body.appendChild(text);
+
+            // Remove label if it exists.
+            if (list_labels[this.shape.id] !== undefined) {
+                list_labels[this.shape.id].style.display = 'none';
+                delete list_labels[this.shape.id];
+            }
+
+            list_labels[this.shape.id] = text;
         }
     };
 
@@ -2621,27 +2832,21 @@ The GDS Grammar:
         GS.Context.call(this, selector);
 
         this.webgl = document.getElementById('three');
-        var that = this;
-
-        function run() {
-            requestAnimationFrame(run);
-            renderer.render(that.scene, camera);
-            controls.update();
-        }
 
         var view_width  = this.webgl.offsetWidth,
             view_height = this.webgl.offsetHeight;
+        var projector = new THREE.Projector();
+
+        this.list_labels = [];
+        this.list_objects = [];
+        var field_depth = 400;
 
         this.scene = new THREE.Scene();
-        var renderer = new THREE.WebGLRenderer({ antialias: true });
-        renderer.setSize(view_width, view_height);
 
-        // Add a camera.
-        // TODO: Place it according to graph content.
-        var camera = new THREE.PerspectiveCamera(50, view_width / view_height, 1, 4000);
-        camera.position.set(-25, -125, 300);
+        var camera = new THREE.PerspectiveCamera(50, view_width / view_height, 1, 10000);
+        camera.position.set(-125, -125, 300);
         camera.up.set(0, 0, 1);
-        this.scene.add(camera);
+        //camera.target = new THREE.Vector3(0, 0, 0);
 
         // Lights.
         var amb_light = new THREE.AmbientLight(0x555555);
@@ -2650,7 +2855,7 @@ The GDS Grammar:
         this.scene.add(amb_light);
         this.scene.add(dir_light);
 
-        /* Mouse controls. */
+        /* Mouse controls */
         // Left click + move: rotate
         // Mouse wheel / middle click + move: zoom in/out
         // Right click + move: pan
@@ -2661,11 +2866,122 @@ The GDS Grammar:
         controls.noZoom = false;
         controls.noPan = false;
         controls.staticMoving = true;
-        controls.dynamicDampingFactor = 0.3;
+
+        window.addEventListener('resize', onWindowResize, false);
+
+        var renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(view_width, view_height);
 
         this.webgl.appendChild(renderer.domElement);
+        var that = this;
 
         run();
+
+        function run() {
+            requestAnimationFrame(run);
+            controls.update();
+            update_labels();
+            renderer.render(that.scene, camera);
+        }
+
+
+        // Label
+
+        // Make sure label color is the same as its related object color.
+        function update_label_color(object, label) {
+            if (object.type === 'Node') {
+                label.style.backgroundColor = '#' + object.material.color.getHexString();
+            }
+            else {
+                label.style.backgroundColor = '#' + object.geometry.colors[0].getHexString();
+            }
+        }
+
+        // Update labels position if needed.
+        function update_labels() {
+            for (var i in list_labels) {
+                var label = list_labels[i];
+                var object = list_objects[i];
+                var vector;
+
+                var is_inside_fov = is_in_fov(object);
+                var visible = is_visible(object);
+
+                if (object.type === 'Node') {
+                    vector = object.position;
+                }
+                else {
+                    vector = object.geometry.boundingSphere.center;
+                }
+
+                //vector = object.geometry.boundingSphere.center;
+
+                var projection = projector.projectVector(vector.clone(), camera);
+                var distance = vector.distanceTo(camera.position);
+
+                // If the label can seen, refresh its position and color and display it.
+                if (visible && is_inside_fov && distance < field_depth) {
+                    label.style.display = '';
+                    update_label_color(object, label);
+                    projection.x = (1 + projection.x) / 2 * window.innerWidth - label.clientWidth / 2;
+                    projection.y = (1 - projection.y) / 2 * window.innerHeight - label.clientHeight / 2;
+                    label.style.top = projection.y + 'px';
+                    label.style.left = projection.x + 'px';
+                }
+                else {
+                    label.style.display = 'none';
+                }
+            }
+        }
+
+        // Return true if object's *center* is not behind another object.
+        function is_visible(object) {
+            var direction;
+
+            if (object.type === 'Node') {
+                direction = object.position.clone();
+            }
+            else {
+                direction = object.geometry.boundingSphere.center.clone();
+            }
+
+            var ray_source = camera.position.clone();
+            var ray_target = direction.sub(ray_source).normalize();
+
+            // Launch a ray from camera to current object.
+            var ray = new THREE.Raycaster(ray_source, ray_target);
+            var ray_intersects = ray.intersectObjects(that.scene.children, true);
+
+            // If current object is not the first seen in the line of sight from camera to itself...
+            if (ray_intersects[0] && object.id !== ray_intersects[0].object.id) {
+                // ..., it is hidden.
+                return false;
+            }
+
+            // Object is visible.
+            return true;
+        }
+
+        // Return true if object is in the camera's field of view.
+        function is_in_fov(object) {
+            camera.updateMatrix();
+            camera.updateMatrixWorld();
+            camera.matrixWorldInverse.getInverse(camera.matrixWorld);
+
+            object.updateMatrix();
+            object.updateMatrixWorld();
+            var frustum = new THREE.Frustum();
+            frustum.setFromMatrix(new THREE.Matrix4().multiplyMatrices(
+                                        camera.projectionMatrix,
+                                        camera.matrixWorldInverse));
+            return frustum.intersectsObject(object);
+        }
+
+        function onWindowResize() {
+            camera.aspect = document.getElementById('three').offsetWidth / document.getElementById('three').offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(document.getElementById('three').offsetWidth, document.getElementById('three').offsetHeight);
+        }
     }
 
     WEBGLContext.prototype = {
@@ -2679,7 +2995,15 @@ The GDS Grammar:
         },
 
         removeNode: function(graph, node) {
+            var id = node.shape.id;
             this.scene.remove(node.shape);
+
+            // Remove label if it exists.
+            if (list_labels[id] !== undefined) {
+                list_labels[id].style.display = 'none';
+                delete list_labels[id];
+                delete list_objects[id];
+            }
         },
 
         wedges: function (edge) {
@@ -2692,7 +3016,15 @@ The GDS Grammar:
         },
 
         removeEdge: function(graph, edge) {
+            var id = edge.shape.id;
             this.scene.remove(edge.shape);
+
+            // Remove label if it exists.
+            if (list_labels[id] !== undefined) {
+                list_labels[id].style.display = 'none';
+                delete list_labels[id];
+                delete list_objects[id];
+            }
         },
 
         clear: function(graph) {},
@@ -2703,3 +3035,364 @@ The GDS Grammar:
     exports.GS.extend(GS.Context.prototype, WEBGLContext.prototype);
     exports.GS.registerContext("webgl", WEBGLContext);
 } (this));
+
+/*
+ * CSS_tree() is used to store CSS for graphstream.
+ * It contains two identical  tree-like structures, one for 'nodes' and one for 'edges'
+ * Structure is as follow:
+ *
+ * ├─ nodes
+ * │    ├── default
+ * │    ├── classes
+ * │    └── ids
+ * └─ edges
+ *      ├── default
+ *      ├── classes
+ *      └── ids
+ */
+
+// Empty object.
+function CSS_tree() {
+    this.nodes = {};
+    this.nodes.ids = {};
+    this.nodes.classes = {};
+    this.nodes.default = {};
+
+    this.edges = {};
+    this.edges.ids = {};
+    this.edges.classes = {};
+    this.edges.default = {};
+}
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// !                                             !
+// !  Problem if node/edge ID is just a number!  !
+// !                                             !
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+// Convert from a string containing CSS data to a CSS_tree() object.
+function data_to_obj(data) {
+
+    // Use an empty tree structure as a starting point.
+    var new_CSS = new CSS_tree();
+
+    // Parse data.
+    var parser = new CSSParser();
+    var data_content = parser.parse(data, false, true);
+
+    for (var id_family = 0; id_family < data_content.cssRules.length; id_family++) {
+        var family = data_content.cssRules[id_family].mSelectorText;
+        var list = data_content.cssRules[id_family].declarations;
+
+        for (var id_property = 0; id_property < list.length; id_property++) {
+            var prop = list[id_property].property;
+            var val = list[id_property].values;
+
+            // Get a string containing the value(s) of the CSS key:value(s) pair.
+            var val_cnt = '';
+            for (var id_value = 0; id_value < val.length; id_value++) {
+                val_cnt += val[id_value].value + ' ';
+            }
+            val_cnt = val_cnt.substring(0, val_cnt.length - 1);
+
+            var id_name, class_name;
+
+            // NODES
+            if (family.substring(0, 4) === 'node') {
+
+                // IDs
+                if (family.contains('node#')) {
+                    id_name = family.substring(5);
+
+                    // If the entry does not exist yet, create it.
+                    if (new_CSS.nodes.ids[id_name] === undefined) {
+                        new_CSS.nodes.ids[id_name] = {};
+                    }
+
+                    // Feed the entry.
+                    new_CSS.nodes.ids[id_name][prop] = val_cnt;
+                }
+
+                // Classes
+                else if (family.contains('node.')) {
+
+                    // If the entry does not exist yet, create it.
+                    class_name = family.substring(5);
+                    if (new_CSS.nodes.classes[class_name] === undefined) {
+                        new_CSS.nodes.classes[class_name] = {};
+                    }
+
+                    // Feed the entry.
+                    new_CSS.nodes.classes[class_name][prop] = val_cnt;
+                }
+
+                // Root
+                else {
+                    new_CSS.nodes.default[prop] = val_cnt;
+                }
+            }
+
+            // EDGES
+            if (family.substring(0, 4) === 'edge') {
+
+                // IDs
+                if (family.contains('edge#')) {
+
+                    // If the entry does not exist yet, create it.
+                    id_name = family.substring(5).toString();
+                    if (new_CSS.edges.ids[id_name] === undefined) {
+                        new_CSS.edges.ids[id_name] = {};
+                    }
+
+                    // Feed the entry.
+                new_CSS.edges.ids[id_name][prop] = val_cnt;
+                }
+
+                // Classes
+                else if (family.contains('edge.')) {
+                    class_name = family.substring(5);
+
+                    // If the entry does not exist yet, create it.
+                    if (new_CSS.edges.classes[class_name] === undefined) {
+                        new_CSS.edges.classes[class_name] = {};
+                    }
+
+                    // Feed the entry.
+                    new_CSS.edges.classes[class_name][prop] = val_cnt;
+                }
+
+                // Root
+                else {
+                    new_CSS.edges.default[prop] = val_cnt;
+                }
+            }
+        }
+    }
+    return new_CSS;
+}
+
+
+// Convert from "cn/ce id style:style_data" to CSS_tree structure.
+// 'type' is 'node' or 'edge'.
+function style_to_obj(type, id, style_data) {
+    var line = type + '#' + id + '{' + style_data + '}';
+
+    return data_to_obj(line);
+}
+
+
+// Update 'main_CSS' with 'new_part' (both are CSS_tree).
+function update_CSS(main_CSS, new_part) {
+    var main_clone = _.clone(main_CSS, true);
+    _.merge(main_CSS, new_part);
+
+    // Return true if the update changed main_CSS content.
+    return is_different(main_CSS, main_clone);
+}
+
+
+// Change a CSS_tree.?.default to a string.
+// Useful to update graph.default_node_style and graph.default_edge_style.
+function css_to_string(css_default) {
+    var string = '';
+    for (var value in css_default) {
+        string += value + ':' + css_default[value] + ';';
+    }
+    return string;
+}
+
+
+// Apply style 'key:value' to 'type' object of ID 'id'.
+// E.g.: apply_css('node', 'n1', 'size', '10')
+function apply_css(type, id, key, value) {
+    if (type === 'node') {
+        graph.nodes[id].setStyle(key + ':' + value);
+    }
+    else if (type === 'edge') {
+        graph.edges[id].setStyle(key + ':' + value);
+    }
+    else
+        console.log('Error of type: ' + type + ' for ' + id + ' in apply_css().');
+}
+
+// Refresh a single node according to content of CSS tree.
+// Parameters are:
+// - tree: CSS object
+// - current_node_id : node to refresh
+// - is_single: if true, update graph.default_node_style, if needed
+function read_css_for_node(tree, current_node_id, is_single) {
+    var node_default = tree.nodes.default;
+    var node_classes = tree.nodes.classes;
+    var node_ids = tree.nodes.ids;
+    var key;
+
+    // If we deal with a single node, update graph.default_node_style, if needed.
+    if (is_single) {
+        var old_default = style_to_obj('node', 'DN', graph.default_node_style);
+        var new_default = style_to_obj('node', 'DN', css_to_string(node_default));
+        update_CSS(old_default, new_default);
+        graph.default_node_style = css_to_string(old_default.nodes.ids.DN);
+    }
+
+    //
+    // node
+    //
+    for (key in node_default) {
+        apply_css('node', current_node_id, key, node_default[key]);
+    }
+
+    //
+    // node.xyz
+    //
+    for (var n_class in node_classes) {
+        if (n_class === graph.nodes[current_node_id].className) {
+            for (key in node_classes[n_class]) {
+                apply_css('node', current_node_id, key, node_classes[n_class][key]);
+            }
+        }
+    }
+
+    //
+    // node#xyz
+    //
+    for (var n_id in node_ids) {
+        if (n_id === current_node_id) {
+            for (key in node_ids[n_id]) {
+                apply_css('node', current_node_id, key, node_ids[n_id][key]);
+            }
+        }
+    }
+}
+
+
+// Refresh a single edge according to content of CSS tree.
+// Parameters are:
+// - tree: CSS object
+// - current_edge_id : edge to refresh
+// - is_single: if true, update graph.default_edge_style, if needed
+function read_css_for_edge(tree, current_edge_id, is_single) {
+    var edge_default = tree.edges.default;
+    var edge_classes = tree.edges.classes;
+    var edge_ids = tree.edges.ids;
+    var key;
+
+    // If we deal with a single edge, update graph.default_edge_style, if needed.
+    if (is_single) {
+        var old_default = style_to_obj('edge', 'DN', graph.default_edge_style);
+        var new_default = style_to_obj('edge', 'DN', css_to_string(edge_default));
+        update_CSS(old_default, new_default);
+        graph.default_edge_style = css_to_string(old_default.edges.ids.DN);
+    }
+
+    //
+    // edge
+    //
+    for (key in edge_default) {
+        apply_css('edge', current_edge_id, key, edge_default[key]);
+    }
+
+    //
+    // edge.xyz
+    //
+    for (var e_class in edge_classes) {
+        if (e_class === graph.edges[current_edge_id].className) {
+            for (key in edge_classes[e_class]) {
+                apply_css('edge', current_edge_id, key, edge_classes[e_class][key]);
+            }
+        }
+    }
+
+    //
+    // edge#xyz
+    //
+    for (var e_id in edge_ids) {
+        if (e_id === current_edge_id) {
+            for (key in edge_ids[e_id]) {
+                apply_css('edge', current_edge_id, key, edge_ids[e_id][key]);
+            }
+        }
+    }
+}
+
+
+// Read all content from tree to refresh a single object.
+function read_css_for_obj(tree, type, id) {
+    if (type === 'node') {
+        read_css_for_node(tree, id, true);
+    }
+    else if (type === 'edge') {
+        read_css_for_edge(tree, id, true);
+    }
+    else
+        console.log('Problem of type: ' + type + ' in read_css_for_obj(' + id + ')...');
+}
+
+
+// Read all 'nodes' content from tree, beginning with 'default', then 'classes', then 'ids'.
+function read_nodes_css(tree) {
+    var node_default = tree.nodes.default;
+    var node_classes = tree.nodes.classes;
+    var node_ids = tree.nodes.ids;
+
+    // Update, if needed, graph.default_node_style.
+    var old_default = style_to_obj('node', 'DN', graph.default_node_style);
+    var new_default = style_to_obj('node', 'DN', css_to_string(node_default));
+    update_CSS(old_default, new_default);
+    graph.default_node_style = css_to_string(old_default.nodes.ids.DN);
+
+    // Refresh nodes one by one.
+    for (var id in graph.nodes) {
+        read_css_for_node(tree, id, false);
+    }
+}
+
+
+// Read all 'edges' content from tree, beginning with 'default', then 'classes', then 'ids'.
+function read_edges_css(tree) {
+    var edge_default = tree.edges.default;
+    var edge_classes = tree.edges.classes;
+    var edge_ids = tree.edges.ids;
+
+    // Update, if needed, graph.default_edge_style.
+    var old_default = style_to_obj('edge', 'DN', graph.default_edge_style);
+    var new_default = style_to_obj('edge', 'DN', css_to_string(edge_default));
+    update_CSS(old_default, new_default);
+    graph.default_edge_style = css_to_string(old_default.edges.ids.DN);
+
+    // Refresh edges one by one.
+    for (var id in graph.edges) {
+        read_css_for_edge(tree, id, false);
+    }
+}
+
+// Read all content from tree to refresh the whole graph.
+function read_css(tree) {
+    read_nodes_css(tree);
+    read_edges_css(tree);
+}
+
+
+// Check if old_CSS's content and new_CSS's content are different.
+function is_different(old_CSS, new_CSS) {
+    return !_.isEqual(_.reduce(old_CSS), _.reduce(new_CSS));
+}
+
+// Get content from CSS file and apply it to the graph objects as needed.
+function handle_css_content(url, main_CSS_object) {
+    var callback = function(data) {
+
+        // Create a new CSS_tree object filled with the CSS file's content from 'url'.
+        var new_CSS = data_to_obj(data);
+
+        // Update the main CSS_tree object with the newly created object's content.
+        var is_different = update_CSS(main_CSS_object, new_CSS);
+
+        // If that update changed the main CSS_tree, refresh the 3D components of the graph.
+        if (is_different) {
+            read_css(main_CSS_object);
+        }
+    };
+
+    $.get(url).success(callback);
+}
+

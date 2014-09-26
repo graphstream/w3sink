@@ -1,29 +1,43 @@
 DGS004
 null 0 0
+cg 'ui.stylesheet':"edge{stroke-width:4gu;}node{size:20;}"
 an n1
-cn n1 xyz:0,0,61.237243569579452454
+cn n1 'xyz':{0,0,60}
+cn n1 label:'N1'
 st 1
 an n2
-cn n2 xyz:-28.867513459481288225,-50,-20.412414523193150818
+cn n2 xyz:-30,-50,-20
+cn n2 label:'N2'
 st 2
-ae 12 n1 n2
+ae e12 n1 n2
+ce e12 label:'E12'
 st 3
 an n3
-cn n3 xyz:-28.867513459481288225,50,-20.412414523193150818
+cn n3 xyz:-30,60,-20
+cn n3 label:'N3'
+cn n3 ui.class:foo
+cn n1 "style":'fill-color:#00FF00;size:19gu;shape:cube'
+cn n1 label:'foo'
 st 4
-ae 13 n1 > n3
-ae 23 n2 n3
-cn n3 style:'fill-color:#00FF00;'
+ae e13 n1 > n3
+ce e13 label:'E13'
+ae e23 n2 n3
+ce e23 label:'E23'
 st 5
-cn n1 xyz:20,20,42
+cn n1 xyz:20,40,50
+cg ui.stylesheet:'node{size:25px;fill-color:#f00;}'
 st 6
+ce e13 ui.class:edge_class
 an n4
-cn n4 xyz:57.735026918962576451,0,-20.412414523193150818
-cn n4 size:5
-ce 13 style:'stroke-width:6px;stroke-color:#0000ff;'
-de 23
+cn n4 xyz:60,0,-20
+cn n4 label:'N4'
+cn n2 ui.class:foo
+de e23
+ce e13 label:'Edgy edge'
 st 7
-ae 14 n1 > n4
-ae 24 n2 n4
+cg "ui.stylesheet":"url('style.css')"
+ae e14 n1 > n4
+ce e14 label:'E14'
+ae e24 n2 n4
 st 7
 dn n2

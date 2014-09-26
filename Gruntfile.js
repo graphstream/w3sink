@@ -15,7 +15,9 @@ module.exports = function(grunt) {
         'lib/gs-w3sink-canvas.js',
         'lib/gs-w3sink-dgs.js',
         'lib/gs-w3sink-layout.js',
-        'lib/gs-w3sink-webgl.js'
+        'lib/gs-w3sink-webgl.js',
+        'lib/CSS_tree.js'
+
     ];
 
     grunt.initConfig({

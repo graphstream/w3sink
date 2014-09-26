@@ -1,0 +1,19 @@
+node {size:14px;}
+
+edge {
+    stroke-width:15px;
+}
+node.foo
+{
+    fill-color:#F80;
+    shape:tetra;
+    size:20;
+}
+
+node#n4 {size: 30;fill-color:#55FF88}
+
+edge.edge_class{
+    stroke-color:#f00;
+    stroke-width:2;
+}
+
