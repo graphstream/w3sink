@@ -9,15 +9,14 @@ module.exports = function(grunt) {
     var sourceMapUrl = name + '.min.js.map';
 
     var sources = [
+        'lib/CSS_tree.js',
         'lib/gs-w3sink-core.js',
         'lib/gs-w3sink-json.js',
         'lib/gs-w3sink-svg.js',
         'lib/gs-w3sink-canvas.js',
         'lib/gs-w3sink-dgs.js',
         'lib/gs-w3sink-layout.js',
-        'lib/gs-w3sink-webgl.js',
-        'lib/CSS_tree.js'
-
+        'lib/gs-w3sink-webgl.js'
     ];
 
     grunt.initConfig({
@@ -29,7 +28,7 @@ module.exports = function(grunt) {
             all: {
                 options: {
                     urls: [
-                        'http://localhost:8888/test/test-dgs.html',
+                        'http://localhost:8888/test/test-webgl-dgs.html',
                     ]
                 }
             }

@@ -61,6 +61,7 @@
         }
 
         var graph = new GS.Graph('#canvas', 'svg');
+        //var graph = new GS.Graph('#three', 'webgl');
         var source = new GS.FileSourceDGS();
         source.addSink(graph);
 

@@ -16,7 +16,7 @@ an n3
 cn n3 xyz:-30,60,-20
 cn n3 label:'N3'
 cn n3 ui.class:foo
-cn n1 "style":'fill-color:#00FF00;size:19gu;shape:cube'
+cn n1 "style":'fill-color:#00FF00;size:20gu;shape:cube'
 cn n1 label:'foo'
 st 4
 ae e13 n1 > n3

@@ -30,6 +30,10 @@
     "d3": "~3.4.3"
   },
   "dependencies": {
-    "es6-promise": "~0.1.1"
+    "es6-promise": "~0.1.1",
+    "three.js": "*",
+    "threejs-controls": "*",
+    "jscssp": "0.1.1",
+    "lodash": "^2.4.1"
   }
 }
